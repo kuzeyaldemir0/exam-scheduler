@@ -1,0 +1,78 @@
+############################
+# Java & JVM
+############################
+*.class
+*.log
+*.ctxt
+hs_err_pid*
+replay_pid*
+
+############################
+# Gradle
+############################
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Temporary Gradle files
+**/out/
+
+############################
+# IntelliJ IDEA
+############################
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IntelliJ build dirs
+out/
+
+############################
+# VS Code
+############################
+.vscode/
+.history/
+.settings/
+
+############################
+# MacOS junk files
+############################
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+############################
+# Logs & temp files
+############################
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+
+############################
+# JavaFX cache (bazı sistemlerde oluşur)
+############################
+*/javafx_cache/
+
+############################
+# Other common ignores
+############################
+*.bak
+*.old
+*.orig
+
+############################
+# Windows junk files
+############################
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+System Volume Information/
+*.lnk
+
