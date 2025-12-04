@@ -30,7 +30,7 @@ java {
 }
 
 application {
-    mainClass = 'examschd.Main'
+    mainClass = 'examschd.App'
 }
 
 

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="examschd.controller.FileSelectController"
+      spacing="15" alignment="CENTER"
+      prefWidth="600" prefHeight="400">
+
+    <Button text="Dosya Seç" onAction="#chooseFile" />
+    <Label fx:id="fileLabel" text="Hiç dosya seçilmedi" />
+
+    <Button text="Devam Et" onAction="#continueToScheduling" />
+
+</VBox>

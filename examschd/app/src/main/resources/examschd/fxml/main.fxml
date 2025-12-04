@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.Button?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="examschd.controller.MainController"
+            prefWidth="600" prefHeight="400">
+
+    <Button text="Başla"
+            fx:id="startButton"
+            layoutX="250"
+            layoutY="180"
+            onAction="#onStartClick" />
+
+</AnchorPane>

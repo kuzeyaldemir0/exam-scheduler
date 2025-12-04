@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.Button?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="examschd.controller.SchedulingController"
+            prefWidth="600" prefHeight="400">
+
+    <TableView fx:id="scheduleTable" prefHeight="300" BorderPane.alignment="CENTER" />
+
+    <Button text="Geri" onAction="#goBack" BorderPane.margin="10" BorderPane.alignment="CENTER">
+    </Button>
+
+</BorderPane>
