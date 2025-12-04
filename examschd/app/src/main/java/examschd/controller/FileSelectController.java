@@ -27,7 +27,7 @@ public class FileSelectController {
     }
 
     @FXML
-    private void continueToSchedule() {
+    private void continueToScheduling() {
         // Sonraki ekrana geçme
     }
 }
