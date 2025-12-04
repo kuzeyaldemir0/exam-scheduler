@@ -1,8 +1,10 @@
-public class Attendance {
+public class Attendance
+{
     private int attendanceId;
     private boolean present;
 
-    public Attendance(int attendanceId, boolean present) {
+    public Attendance(int attendanceId, boolean present)
+    {
         this.attendanceId = attendanceId;
         this.present = present;
     }

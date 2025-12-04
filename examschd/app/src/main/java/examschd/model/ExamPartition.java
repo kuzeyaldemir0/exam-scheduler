@@ -1,7 +1,8 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExamPartition {
+public class ExamPartition
+{
     private int partitionId;
     private int capacityAssigned;
 
@@ -11,7 +12,8 @@ public class ExamPartition {
     // Relationship: Composition (Diamond) - Partition contains Assignments
     private List<StudentAssignment> studentAssignments;
 
-    public ExamPartition(int partitionId, int capacityAssigned, Classroom classroom) {
+    public ExamPartition(int partitionId, int capacityAssigned, Classroom classroom)
+    {
         this.partitionId = partitionId;
         this.capacityAssigned = capacityAssigned;
         this.classroom = classroom;

@@ -1,9 +1,11 @@
-public class Classroom {
+public class Classroom
+{
     private int classroomId;
     private String code;
     private int capacity;
 
-    public Classroom(int classroomId, String code, int capacity) {
+    public Classroom(int classroomId, String code, int capacity)
+    {
         this.classroomId = classroomId;
         this.code = code;
         this.capacity = capacity;

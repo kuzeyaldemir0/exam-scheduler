@@ -2,7 +2,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class ExamSession {
+public class ExamSession
+{
     private int sessionId;
     private Date examDate;
     private String timeSlot;
@@ -14,7 +15,8 @@ public class ExamSession {
     // Relationship: Composition (Diamond) - Session splits into Partitions
     private List<ExamPartition> partitions;
 
-    public ExamSession(int sessionId, Date examDate, String timeSlot, int durationMinutes, Course course) {
+    public ExamSession(int sessionId, Date examDate, String timeSlot, int durationMinutes, Course course)
+    {
         this.sessionId = sessionId;
         this.examDate = examDate;
         this.timeSlot = timeSlot;
