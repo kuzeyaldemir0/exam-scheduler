@@ -1,6 +1,4 @@
-/* ---------------------------------------------------
-   Font definitions (Inter – modern UI font)
---------------------------------------------------- */
+
 @font-face {
     font-family: "Inter";
     src: url("../fonts/Inter-Regular.ttf");
@@ -16,15 +14,11 @@
     src: url("../fonts/Inter-SemiBold.ttf");
 }
 
-/* Global default font */
 .root {
     -fx-background-color: #F5F5F7;
     -fx-font-family: "Inter";
 }
 
-/* ---------------------------------------------------
-   Modern card container
---------------------------------------------------- */
 .card {
     -fx-padding: 40;
     -fx-background-color: #FFFFFFCC;
@@ -32,10 +26,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 20, 0.15, 0, 4);
 }
 
-
-/* ---------------------------------------------------
-   Title styling
---------------------------------------------------- */
 .title {
     -fx-font-family: "Inter-SemiBold";
     -fx-font-size: 26px;
@@ -44,14 +34,9 @@
     -fx-min-width: 450;
     -fx-pref-width: 450;
     -fx-alignment: center;
-    /* Optional: slight spacing for a modern look */
     -fx-letter-spacing: 0.3px;
 }
 
-
-/* ---------------------------------------------------
-   File label styling
---------------------------------------------------- */
 .file-label {
     -fx-text-fill: #666;
     -fx-font-size: 14px;
@@ -59,10 +44,6 @@
     -fx-pref-width: 160;
 }
 
-
-/* ---------------------------------------------------
-   File select buttons
---------------------------------------------------- */
 .choose-btn {
     -fx-background-color: #f3f3f3;
     -fx-background-radius: 10;
@@ -79,7 +60,6 @@
     -fx-border-color: #ddd;
     -fx-border-radius: 10;
 
-    /* smooth visual transition */
     -fx-transition: all 0.2s ease-in-out;
 }
 
@@ -87,10 +67,6 @@
     -fx-background-color: #e7e7e7;
 }
 
-
-/* ---------------------------------------------------
-   Continue button
---------------------------------------------------- */
 .continue-btn {
     -fx-background-color: linear-gradient(to bottom, #4A90E2, #3C7BC6);
     -fx-background-radius: 10;
@@ -105,10 +81,9 @@
     -fx-background-color: linear-gradient(to bottom, #3C7BC6, #326BA8);
 }
 
-/* Red alert box */
 .warning-box {
-    -fx-background-color: #fdecea;   /* açık kırmızı */
-    -fx-border-color: #f5c2c0;       /* pembe-kırmızı border */
+    -fx-background-color: #fdecea;  
+    -fx-border-color: #f5c2c0;     
     -fx-border-width: 1.5;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
@@ -116,14 +91,12 @@
     -fx-max-width: 380;
 }
 
-/* Red exclamation icon */
 .warning-icon {
-    -fx-text-fill: #d93025;          /* Google kırmızı */
+    -fx-text-fill: #d93025;          
     -fx-font-size: 18px;
     -fx-font-weight: bold;
 }
 
-/* Warning message text */
 .warning-text {
     -fx-text-fill: #b3261e;
     -fx-font-size: 14px;

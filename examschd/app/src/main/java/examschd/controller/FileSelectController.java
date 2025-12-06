@@ -22,9 +22,6 @@ public class FileSelectController {
     private File enrollmentsFile;
     private File studentsFile;
 
-    // ============================
-    // FILE SELECT HELPERS
-    // ============================
 
     private File selectCSV() {
         FileChooser chooser = new FileChooser();
@@ -37,9 +34,6 @@ public class FileSelectController {
         warningLabel.setText("");
     }
 
-    // ============================
-    // FILE SELECT METHODS
-    // ============================
 
     @FXML
     private void chooseClassroomsFile() {
@@ -77,9 +71,6 @@ public class FileSelectController {
         }
     }
 
-    // ============================
-    // CONTINUE HANDLER
-    // ============================
 
     @FXML
     private void continueToScheduling() {
@@ -97,6 +88,6 @@ public class FileSelectController {
         clearWarning();
 
         System.out.println("All files selected! Proceeding...");
-        // TODO: Load next scene and pass selected files
+
     }
 }
