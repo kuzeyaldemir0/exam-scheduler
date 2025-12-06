@@ -1,35 +1,38 @@
+package examschd.model;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class Course
-{
+public class Course {
     private int courseId;
     private String courseCode;
 
-    // Relationship: One course has many students
-    private List<Student> enrolledStudents;
-    // Relationship: One course has many exam sessions
+    // CHANGED: Now holds Enrollments instead of Students directly
+    private List<Enrollment> enrollments;
     private List<ExamSession> examSessions;
 
-    public Course(int courseId, String courseCode)
-    {
+    public Course(int courseId, String courseCode) {
         this.courseId = courseId;
         this.courseCode = courseCode;
-        this.enrolledStudents = new ArrayList<>();
+        this.enrollments = new ArrayList<>();
         this.examSessions = new ArrayList<>();
     }
 
-    public List<Student> getStudents() {
-        return enrolledStudents;
+    public void addEnrollment(Enrollment enrollment) {
+        this.enrollments.add(enrollment);
     }
 
-    // Helper to add student
-    public void addStudent(Student student)
-    {
-        if (!enrolledStudents.contains(student))
-        {
-            enrolledStudents.add(student);
+    public List<Enrollment> getEnrollments() {
+        return enrollments;
+    }
+
+    // Helper method for your Algorithm
+    public List<Student> getEnrolledStudents() {
+        List<Student> students = new ArrayList<>();
+        for (Enrollment e : enrollments) {
+            students.add(e.getStudent());
         }
+        return students;
     }
 
     public int getCourseId() { return courseId; }
