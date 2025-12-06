@@ -2,24 +2,42 @@ package examschd.model;
 
 public class Classroom {
     private int classroomId;
-    private String code;
+    private String name;
     private int capacity;
 
-    public Classroom(int classroomId, String code, int capacity) {
+
+    // Constructor
+    public Classroom(int classroomId, String name, int capacity) {
+
         this.classroomId = classroomId;
-        this.code = code;
+        this.name = name;
         this.capacity = capacity;
     }
 
-    public int getClassroomId() { 
-        return classroomId; 
+
+    // Getter & Setter
+    public int getClassroomId() {
+        return classroomId;
     }
 
-    public String getCode() { 
-        return code; 
+    public void setClassroomId(int classroomId) {
+        this.classroomId = classroomId;
     }
-    
-    public int getCapacity() { 
-        return capacity; 
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+
     }
 }

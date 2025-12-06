@@ -34,15 +34,32 @@ public class Student {
     }
 
     // Getters for other fields
-    public int getStudentId() { 
-        return studentId; 
+    public int getStudentId() {
+        return studentId;
     }
 
-    public String getStudentNumber() { 
-        return studentNumber; 
+    public String getStudentNumber() {
+        return studentNumber;
     }
 
-    public List<StudentAssignment> getAssignments() { 
-        return assignments; 
+    public List<StudentAssignment> getAssignments() {
+        return assignments;
+    }
+
+    // DAO compatibility methods (aliases for database operations)
+    public int getId() {
+        return studentId;
+    }
+
+    public void setId(int id) {
+        this.studentId = id;
+    }
+
+    public String getName() {
+        return studentNumber;
+    }
+
+    public void setName(String name) {
+        this.studentNumber = name;
     }
 }

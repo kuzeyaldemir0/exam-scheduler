@@ -1,6 +1,9 @@
 package examschd.model;
 
-public class StudentAssignment {
+
+public class StudentAssignment
+{
+
     private int assignmentId;
     private int seatNumber;
 
@@ -24,19 +27,11 @@ public class StudentAssignment {
         this.attendance = attendance;
     }
 
-    public Attendance getAttendance() { 
-        return attendance; 
-    }
+    public ExamPartition getPartition() { return partition; }   
 
-    public int getAssignmentId() { 
-        return assignmentId; 
-    }
+    public Attendance getAttendance() { return attendance; }
+    public int getAssignmentId() { return assignmentId; }
+    public int getSeatNumber() { return seatNumber; }
+    public Student getStudent() { return student; }
 
-    public int getSeatNumber() { 
-        return seatNumber; 
-    }
-    
-    public Student getStudent() { 
-        return student; 
-    }
 }

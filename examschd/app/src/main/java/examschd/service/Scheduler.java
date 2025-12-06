@@ -82,7 +82,7 @@ public class Scheduler {
 
         // Print enrollment stats for verification
         for (Course course : allCourses) {
-            System.out.println("  - " + course.getCourseCode() + ": " +
+            System.out.println("  - " + course.getCourseName() + ": " +
                              course.getStudents().size() + " students");
         }
     }
@@ -167,13 +167,13 @@ public class Scheduler {
                     schedule.get(timeSlot).add(examSession);
 
                     scheduled = true;
-                    System.out.println("Scheduled " + course.getCourseCode() + " at " + timeSlot);
+                    System.out.println("Scheduled " + course.getCourseName() + " at " + timeSlot);
                     break;
                 }
             }
 
             if (!scheduled) {
-                System.out.println("ERROR: Could not schedule " + course.getCourseCode());
+                System.out.println("ERROR: Could not schedule " + course.getCourseName());
             }
         }
 

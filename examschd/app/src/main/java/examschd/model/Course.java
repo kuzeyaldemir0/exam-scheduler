@@ -5,40 +5,50 @@ import java.util.List;
 
 public class Course {
     private int courseId;
-    private String courseCode;
+    private String courseName;
 
     // Relationship: One course has many students
     private List<Student> enrolledStudents;
     // Relationship: One course has many exam sessions
     private List<ExamSession> examSessions;
 
-    public Course(int courseId, String courseCode) {
+    // Constructor
+    public Course(int courseId, String courseName) {
         this.courseId = courseId;
-        this.courseCode = courseCode;
+        this.courseName = courseName;
         this.enrolledStudents = new ArrayList<>();
         this.examSessions = new ArrayList<>();
     }
 
+    // Getter & Setter
+    public int getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(int courseId) {
+        this.courseId = courseId;
+    }
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
+
+    // Relationship methods
     public List<Student> getStudents() {
         return enrolledStudents;
     }
 
-    // Helper to add student
     public void addStudent(Student student) {
         if (!enrolledStudents.contains(student)) {
             enrolledStudents.add(student);
         }
     }
 
-    public int getCourseId() { 
-        return courseId; 
-    }
-    
-    public String getCourseCode() { 
-        return courseCode; 
-    }
-
-    public List<ExamSession> getExamSessions() { 
-        return examSessions; 
+    public List<ExamSession> getExamSessions() {
+        return examSessions;
     }
 }
