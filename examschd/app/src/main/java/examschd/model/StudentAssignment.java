@@ -1,3 +1,5 @@
+package examschd.model;
+
 public class StudentAssignment
 {
     private int assignmentId;
@@ -23,6 +25,8 @@ public class StudentAssignment
     public void setAttendance(Attendance attendance) {
         this.attendance = attendance;
     }
+
+    public ExamPartition getPartition() { return partition; }   
 
     public Attendance getAttendance() { return attendance; }
     public int getAssignmentId() { return assignmentId; }

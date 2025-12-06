@@ -1,3 +1,5 @@
+package examschd.model;
+
 public class Attendance
 {
     private int attendanceId;

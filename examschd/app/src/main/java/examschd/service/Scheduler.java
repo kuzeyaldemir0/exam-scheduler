@@ -1,6 +1,10 @@
+package examschd.service;
+
+import java.util.*;
+import examschd.model.Student;
+import examschd.model.Course;   
+import examschd.model.Classroom;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Scheduler
 {

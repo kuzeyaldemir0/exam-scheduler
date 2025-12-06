@@ -1,42 +1,20 @@
+package examschd.model;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class Student
-{
-    // Attributes (Private as per UML red square)
-    private int studentId;
-    private String studentNumber;
+public class Student {
+    private int id;
+    private String name;
 
-    // Relationship: One student has many courses
-    private List<Course> enrolledCourses;
-    // Relationship: One student has many assignments
-    private List<StudentAssignment> assignments;
-
-    // Constructor
-    public Student(int studentId, String studentNumber)
-    {
-        this.studentId = studentId;
-        this.studentNumber = studentNumber;
-        this.enrolledCourses = new ArrayList<>();
-        this.assignments = new ArrayList<>();
+    public Student(int id, String name) {
+        this.id = id;
+        this.name = name;
     }
 
-    // Methods (Public as per UML green circle)
-    public List<Course> getEnrolledCourses() {
-        return enrolledCourses;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    // Helper method to add a course
-    public void enrollInCourse(Course course)
-    {
-        if (!enrolledCourses.contains(course))
-        {
-            enrolledCourses.add(course);
-        }
-    }
-
-    // Getters for other fields
-    public int getStudentId() { return studentId; }
-    public String getStudentNumber() { return studentNumber; }
-    public List<StudentAssignment> getAssignments() { return assignments; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 }
