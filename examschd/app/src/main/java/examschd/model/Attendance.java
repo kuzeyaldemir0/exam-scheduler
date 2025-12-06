@@ -1,6 +1,8 @@
 package examschd.model;
 
-public class Attendance {
+
+public class Attendance
+{
     private int attendanceId;
     private boolean present;
 
