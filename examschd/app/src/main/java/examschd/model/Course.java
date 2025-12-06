@@ -1,8 +1,9 @@
+package examschd.model;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class Course
-{
+public class Course {
     private int courseId;
     private String courseCode;
 
@@ -11,8 +12,7 @@ public class Course
     // Relationship: One course has many exam sessions
     private List<ExamSession> examSessions;
 
-    public Course(int courseId, String courseCode)
-    {
+    public Course(int courseId, String courseCode) {
         this.courseId = courseId;
         this.courseCode = courseCode;
         this.enrolledStudents = new ArrayList<>();
@@ -24,15 +24,21 @@ public class Course
     }
 
     // Helper to add student
-    public void addStudent(Student student)
-    {
-        if (!enrolledStudents.contains(student))
-        {
+    public void addStudent(Student student) {
+        if (!enrolledStudents.contains(student)) {
             enrolledStudents.add(student);
         }
     }
 
-    public int getCourseId() { return courseId; }
-    public String getCourseCode() { return courseCode; }
-    public List<ExamSession> getExamSessions() { return examSessions; }
+    public int getCourseId() { 
+        return courseId; 
+    }
+    
+    public String getCourseCode() { 
+        return courseCode; 
+    }
+
+    public List<ExamSession> getExamSessions() { 
+        return examSessions; 
+    }
 }

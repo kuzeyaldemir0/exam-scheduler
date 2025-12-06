@@ -1,8 +1,9 @@
+package examschd.model;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExamPartition
-{
+public class ExamPartition {
     private int partitionId;
     private int capacityAssigned;
 
@@ -12,8 +13,7 @@ public class ExamPartition
     // Relationship: Composition (Diamond) - Partition contains Assignments
     private List<StudentAssignment> studentAssignments;
 
-    public ExamPartition(int partitionId, int capacityAssigned, Classroom classroom)
-    {
+    public ExamPartition(int partitionId, int capacityAssigned, Classroom classroom) {
         this.partitionId = partitionId;
         this.capacityAssigned = capacityAssigned;
         this.classroom = classroom;
@@ -24,8 +24,19 @@ public class ExamPartition
         this.studentAssignments.add(assignment);
     }
 
-    public int getPartitionId() { return partitionId; }
-    public int getCapacityAssigned() { return capacityAssigned; }
-    public Classroom getClassroom() { return classroom; }
-    public List<StudentAssignment> getStudentAssignments() { return studentAssignments; }
+    public int getPartitionId() { 
+        return partitionId; 
+    }
+
+    public int getCapacityAssigned() { 
+        return capacityAssigned; 
+    }
+
+    public Classroom getClassroom() { 
+        return classroom; 
+    }
+
+    public List<StudentAssignment> getStudentAssignments() { 
+        return studentAssignments; 
+    }
 }
