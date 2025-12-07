@@ -20,6 +20,26 @@ public class Course {
         this.examSessions = new ArrayList<>();
     }
 
+    // ENROLLMENT TODO #1 DONE
+    private int examDuration; // in minutes
+
+    public Course(int id, String courseName, int examDuration) {
+        this.id = id;
+        this.courseName = courseName;
+        this.examDuration = examDuration;
+        this.students = new ArrayList<>();
+        this.examSessions = new ArrayList<>();
+    }
+
+    public int getExamDuration() {
+        return examDuration;
+    }
+
+    public void setExamDuration(int examDuration) {
+        this.examDuration = examDuration;
+    }
+
+
     // Getter & Setter
     public int getCourseId() {
         return courseId;

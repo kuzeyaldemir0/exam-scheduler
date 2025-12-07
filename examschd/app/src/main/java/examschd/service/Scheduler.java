@@ -50,8 +50,10 @@ public class Scheduler {
             "PSYCH101", "STAT101", "CS201", "MATH201"
         };
 
+        int[] durations = {120, 120, 90, 120, 90, 90, 120, 90, 90, 120, 150, 150}; //to test TODO #1
+
         for (int i = 0; i < courseCodes.length; i++) {
-            Course course = new Course(i, courseCodes[i]);
+            Course course = new Course(i, courseCodes[i], durations[i]);
             allCourses.add(course);
         }
 
@@ -102,6 +104,13 @@ public class Scheduler {
         System.out.println("Generating schedule...");
 
         List<Course> sortedCourses = sortByEnrollment();
+
+        // Find the maximum exam duration to determine slot size
+        int maxDuration = sortedCourses.stream()
+                .mapToInt(Course::getExamDuration)
+                .max()
+                .orElse(120);
+
         List<String> timeSlots = createTimeSlots();
         Map<String, List<ExamSession>> schedule = new HashMap<>();
 
@@ -150,12 +159,11 @@ public class Scheduler {
 
                 if (canScheduleHere) {
                     // TODO FUTURE: Use actual exam date instead of new Date()
-                    // TODO FUTURE: Make duration configurable per course
                     ExamSession examSession = new ExamSession(
                         sessionIdCounter++,
                         new Date(),
                         timeSlot,
-                        120, // Fixed 2-hour duration
+                            course.getExamDuration(), // Use course-specific duration
                         course
                     );
 
@@ -183,19 +191,25 @@ public class Scheduler {
 
     // Generate all time slots for the exam period
     // Returns 54 time slot strings: "Day1-Slot1" through "Day9-Slot6"
-    private List<String> createTimeSlots() {
+    private List<String> createTimeSlots(int slotDurationMinutes)  // ENROLLMENT TODO #2 DONE
+    {
         int numDays = 9;
-        int slotsPerDay = 6;
+        int minutesPerDay = 8 * 60; // 8-hour exam day (480 minutes)
+        int slotsPerDay = minutesPerDay / slotDurationMinutes;
+
         List<String> timeSlots = new ArrayList<>();
 
-        for (int day = 1; day <= numDays; day++) {
-            for (int slot = 1; slot <= slotsPerDay; slot++) {
+        for (int day = 1; day <= numDays; day++)
+        {
+            for (int slot = 1; slot <= slotsPerDay; slot++)
+            {
                 timeSlots.add("Day" + day + "-Slot" + slot);
             }
         }
 
         return timeSlots;
     }
+
 
     // Check if student already has 2 or more exams on the given day
     // Used to enforce constraint: max 2 exams per day per student
