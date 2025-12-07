@@ -14,20 +14,37 @@ import examschd.model.ExamSession;
 import examschd.model.Student;
 
 public class Scheduler {
-    // TODO FUTURE: Make exam duration configurable per course instead of hardcoded
-    // TODO FUTURE: Implement dynamic time slots instead of fixed 2-hour slots
-    // TODO FUTURE: Use actual exam dates instead of placeholder Date objects
-    // TODO FUTURE: Make number of days and slots per day configurable
+    // TODO FUTURE 1: Make exam duration configurable per course instead of hardcoded: DONE
+    // TODO FUTURE 2: Implement dynamic time slots instead of fixed 2-hour slots: DONE
+    // TODO FUTURE 3: Use actual exam dates instead of placeholder Date objects:
+    // TODO FUTURE 4: Make number of days and slots per day configurable: DONE
 
     // Lists to hold the loaded data
     private List<Student> allStudents;
     private List<Course> allCourses;
     private List<Classroom> allClassrooms;
 
+    private int numExamDays;
+    private int slotsPerDay;
+
     public Scheduler() {
         this.allStudents = new ArrayList<>();
         this.allCourses = new ArrayList<>();
         this.allClassrooms = new ArrayList<>();
+        this.numExamDays = 9;      // Default: 9 days
+        this.slotsPerDay = 6;      // Default: 6 slots per day
+    }
+
+    public void setNumExamDays(int days) {
+        if (days > 0) {
+            this.numExamDays = days;
+        }
+    }
+
+    public void setSlotsPerDay(int slots) {
+        if (slots > 0) {
+            this.slotsPerDay = slots;
+        }
     }
 
     // Method to create realistic test data for development/testing
@@ -190,6 +207,7 @@ public class Scheduler {
     }
 
     // Generate all time slots for the exam period
+<<<<<<< Updated upstream
     // Returns 54 time slot strings: "Day1-Slot1" through "Day9-Slot6"
     private List<String> createTimeSlots(int slotDurationMinutes)  // ENROLLMENT TODO #2 DONE
     {
@@ -200,6 +218,13 @@ public class Scheduler {
         List<String> timeSlots = new ArrayList<>();
 
         for (int day = 1; day <= numDays; day++)
+=======
+    private List<String> createTimeSlots()
+    {
+        List<String> timeSlots = new ArrayList<>();
+
+        for (int day = 1; day <= numExamDays; day++)
+>>>>>>> Stashed changes
         {
             for (int slot = 1; slot <= slotsPerDay; slot++)
             {
@@ -216,7 +241,7 @@ public class Scheduler {
     private boolean studentAlreadyHasTwoOrMoreExamsOnDay(Map<String, List<ExamSession>> schedule, Student student, int day) {
         int examCount = 0;
 
-        for (int slot = 1; slot <= 6; slot++) {
+        for (int slot = 1; slot <= slotsPerDay; slot++) {
             String timeSlot = "Day" + day + "-Slot" + slot;
             List<ExamSession> sessionsAtThisTime = schedule.get(timeSlot);
 
@@ -253,7 +278,7 @@ public class Scheduler {
         }
 
         // Check next slot
-        if (slot < 6) {
+        if (slot < slotsPerDay) {
             int nextSlot = slot + 1;
             String nextTimeSlot = "Day" + day + "-Slot" + nextSlot;
             List<ExamSession> sessionsAtNext = schedule.get(nextTimeSlot);
@@ -296,6 +321,12 @@ public class Scheduler {
 
         // Create a scheduler instance
         Scheduler scheduler = new Scheduler();
+
+        /*
+        // Optionally set custom exam days and slots (if not default 9 days, 6 slots)
+        scheduler.setNumExamDays(10);  // Example: 10 days
+        scheduler.setSlotsPerDay(5);   // Example: 5 slots per day
+         */
 
         // Create test data (150 students, 12 courses, 6 classrooms)
         scheduler.createTestData();
