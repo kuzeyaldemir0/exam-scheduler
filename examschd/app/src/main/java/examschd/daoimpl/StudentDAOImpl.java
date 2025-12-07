@@ -1,7 +1,5 @@
 package examschd.daoimpl;
 
-import java.util.*;
-
 import examschd.model.Student;
 import examschd.dao.StudentDAO;
 import examschd.db.DB;
