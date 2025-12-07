@@ -8,6 +8,8 @@ public class ExamSession {
     private int sessionId;
     private Date examDate;
     private String timeSlot;
+    
+    @SuppressWarnings("unused")
     private int durationMinutes;
 
     // Relationship: Course "has" ExamSession

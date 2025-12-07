@@ -2,7 +2,6 @@ package examschd.service.readers;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.IOException;
 import examschd.model.Student;
 import java.util.ArrayList;
 import java.util.List;
