@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="examschd.controller.FilterSettingsController"
+            prefWidth="650" prefHeight="550"
+            style="-fx-background-color: #FFFFFF; -fx-background-radius: 14;">
+
+    <VBox alignment="TOP_CENTER"
+          spacing="25"
+          prefWidth="650"
+          style="-fx-padding: 25 40 25 40;">
+
+        <!-- TITLE -->
+        <Label text="Filter Settings"
+               style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #222;" />
+
+        <!-- COURSE DURATIONS SECTION -->
+        <VBox spacing="10" prefWidth="580">
+
+            <Label text="Course Durations"
+                   style="-fx-font-size: 18px; -fx-font-weight: 600; -fx-text-fill: #444;" />
+
+            <ScrollPane prefHeight="180" prefWidth="580"
+                        fitToWidth="true"
+                        style="-fx-background-color: transparent; -fx-padding: 0;">
+                <VBox fx:id="courseDurationList"
+                      spacing="12"
+                      style="-fx-background-color: #F5F5F7; -fx-padding: 15; -fx-background-radius: 10;" />
+            </ScrollPane>
+        </VBox>
+
+        <!-- EXAM DAYS SECTION -->
+        <VBox spacing="10" prefWidth="580">
+
+            <Label text="Exam Days"
+                   style="-fx-font-size: 18px; -fx-font-weight: 600; -fx-text-fill: #444;" />
+
+            <ScrollPane prefHeight="180" prefWidth="580"
+                        fitToWidth="true"
+                        style="-fx-background-color: transparent; -fx-padding: 0;">
+                <VBox fx:id="examDaysList"
+                      spacing="12"
+                      style="-fx-background-color: #F5F5F7; -fx-padding: 15; -fx-background-radius: 10;" />
+            </ScrollPane>
+        </VBox>
+
+        <!-- BUTTONS -->
+        <HBox alignment="CENTER_RIGHT"
+              spacing="20"
+              style="-fx-padding: 10 0 0 0;">
+
+            <Button text="Cancel"
+                    onAction="#closePopup"
+                    style="-fx-background-color: #DDDDDD;
+                           -fx-background-radius: 8;
+                           -fx-font-size: 14px;
+                           -fx-padding: 8 20;" />
+
+            <Button text="Save"
+                    onAction="#saveSettings"
+                    style="-fx-background-color: #4A90E2;
+                           -fx-background-radius: 8;
+                           -fx-text-fill: white;
+                           -fx-font-size: 14px;
+                           -fx-padding: 8 22;" />
+        </HBox>
+
+    </VBox>
+
+</AnchorPane>

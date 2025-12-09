@@ -15,11 +15,6 @@ public class ImportService {
     private final ClassroomDAO classroomDAO = new ClassroomDAOImpl();
     private final EnrollmentDAO enrollmentDAO = new EnrollmentDAOImpl();
 
-    private final StudentCsvReader studentReader = new StudentCsvReader();
-    private final CourseCsvReader courseReader = new CourseCsvReader();
-    private final ClassroomCsvReader classroomReader = new ClassroomCsvReader();
-    private final EnrollmentCsvReader enrollmentReader = new EnrollmentCsvReader();
-
     // ID sayacı
     private int studentIdCounter = 1;
     private int courseIdCounter = 1;
@@ -31,7 +26,7 @@ public class ImportService {
     private Map<String, Integer> courseIdMap = new HashMap<>();  // key = courseName, value = courseId
 
     public void importStudents(String filePath) throws Exception {
-        List<Student> students = studentReader.read(filePath);
+        List<Student> students = StudentCsvReader.read(filePath);
 
         for (Student s : students) {
             s.setId(studentIdCounter++);
@@ -45,7 +40,7 @@ public class ImportService {
     }
 
     public void importCourses(String filePath) throws Exception {
-        List<Course> courses = courseReader.read(filePath);
+        List<Course> courses = CourseCsvReader.read(filePath);
 
         for (Course c : courses) {
             c.setCourseId(courseIdCounter++);
@@ -59,7 +54,7 @@ public class ImportService {
     }
 
     public void importClassrooms(String filePath) throws Exception {
-        List<Classroom> classrooms = classroomReader.read(filePath);
+        List<Classroom> classrooms = ClassroomCsvReader.read(filePath);
 
         for (Classroom cr : classrooms) {
             cr.setClassroomId(classroomIdCounter++);
@@ -70,7 +65,7 @@ public class ImportService {
     }
 
     public void importEnrollments(String filePath) throws Exception {
-    List<Enrollment> enrollments = enrollmentReader.read(filePath);
+    List<Enrollment> enrollments = EnrollmentCsvReader.read(filePath);
 
     for (Enrollment e : enrollments) {
         e.setEnrollmentId(enrollmentIdCounter++);

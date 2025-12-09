@@ -51,4 +51,10 @@ public class Course {
     public List<ExamSession> getExamSessions() {
         return examSessions;
     }
+
+    private int durationMinutes = 120;
+
+    public int getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
+
 }

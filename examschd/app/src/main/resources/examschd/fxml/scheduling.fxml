@@ -1,16 +1,131 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml"
+<AnchorPane xmlns:fx="http://javafx.com/fxml"
+            fx:id="rootPane"
             fx:controller="examschd.controller.SchedulingController"
-            prefWidth="600" prefHeight="400">
+            prefWidth="1100" prefHeight="800"
+            style="-fx-background-color: #F5F5F7;">
 
-    <TableView fx:id="scheduleTable" prefHeight="300" BorderPane.alignment="CENTER" />
+    <VBox spacing="30" alignment="TOP_CENTER"
+          prefWidth="1100" layoutY="20">
 
-    <Button text="Geri" onAction="#goBack" BorderPane.margin="10" BorderPane.alignment="CENTER">
-    </Button>
+        <!-- TITLE -->
+        <Label text="Exam Scheduler — Dashboard"
+               style="-fx-font-size: 28px;
+                      -fx-font-weight: bold;
+                      -fx-text-fill: #222;" />
 
-</BorderPane>
+        <!-- FILTER BUTTON (MODAL PENCERE AÇACAK) -->
+        <Button fx:id="openFiltersBtn"
+                text="Filter Settings"
+                style="-fx-background-color: linear-gradient(to bottom, #4A90E2, #3C7BC6);
+                       -fx-text-fill: white;
+                       -fx-background-radius: 10;
+                       -fx-padding: 10 25;
+                       -fx-font-size: 15px;
+                       -fx-font-weight: 700;" />
+
+        <!-- SEARCH + SELECTION PANEL -->
+        <HBox spacing="40" alignment="CENTER">
+
+              <!-- STUDENT CARD -->
+              <VBox spacing="12" style="-fx-background-color: #FFFFFFCC;
+                                          -fx-background-radius: 16;
+                                          -fx-padding: 20;
+                                          -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 18, 0.2, 0, 4);">
+
+                     <Label text="Student Schedule" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                     <TextField fx:id="studentSearchField"
+                            promptText="Search by student ID..."
+                            style="-fx-background-radius: 8; -fx-padding: 6 10;"/>
+
+                     <ComboBox fx:id="studentCombo"
+                            promptText="Select Student"
+                            prefWidth="260"/>
+
+                     <Button fx:id="showStudentBtn"
+                            text="Show Schedule"
+                            prefWidth="260"
+                            style="-fx-background-color: #f3f3f3;
+                                   -fx-border-color: #ddd;
+                                   -fx-background-radius: 10;
+                                   -fx-padding: 10 20;
+                                   -fx-font-weight: 600;"/>
+              </VBox>
+
+              <!-- DATE RANGE CARD -->
+              <VBox spacing="12" style="-fx-background-color: #FFFFFFCC;
+                                   -fx-background-radius: 16;
+                                   -fx-padding: 20;
+                                   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 18, 0.2, 0, 4);">
+
+              <Label text="Exam Date Range" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+              <HBox spacing="10" alignment="CENTER_LEFT">
+                     <Label text="Start:"/>
+                     <DatePicker fx:id="startDatePicker" prefWidth="180"/>
+              </HBox>
+
+              <HBox spacing="10" alignment="CENTER_LEFT">
+                     <Label text="End:"/>
+                     <DatePicker fx:id="endDatePicker" prefWidth="180"/>
+              </HBox>
+
+              <Button fx:id="applyDateRangeBtn"
+                     text="Apply Date Range"
+                     prefWidth="240"
+                     style="-fx-background-color: #f3f3f3;
+                            -fx-border-color: #ddd;
+                            -fx-background-radius: 10;
+                            -fx-padding: 10 20;
+                            -fx-font-weight: 600;"/>
+              </VBox>
+
+
+              <!-- CLASSROOM CARD -->
+              <VBox spacing="12" style="-fx-background-color: #FFFFFFCC;
+                                          -fx-background-radius: 16;
+                                          -fx-padding: 20;
+                                          -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 18, 0.2, 0, 4);">
+
+                     <Label text="Classroom Schedule" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                     <TextField fx:id="classroomSearchField"
+                            promptText="Search classroom name..."
+                            style="-fx-background-radius: 8; -fx-padding: 6 10;"/>
+
+                     <ComboBox fx:id="classroomCombo"
+                            promptText="Select Classroom"
+                            prefWidth="260"/>
+
+                     <Button fx:id="showClassroomBtn"
+                            text="Show Schedule"
+                            prefWidth="260"
+                            style="-fx-background-color: #f3f3f3;
+                                   -fx-border-color: #ddd;
+                                   -fx-background-radius: 10;
+                                   -fx-padding: 10 20;
+                                   -fx-font-weight: 600;"/>
+              </VBox>
+
+        </HBox>
+
+        <!-- SCHEDULE TABLE -->
+        <ScrollPane fitToWidth="true" fitToHeight="true" prefWidth="980" prefHeight="550">
+              <GridPane fx:id="scheduleGrid"
+                            hgap="6" vgap="6"
+                            style="-fx-background-color: white;
+                                   -fx-padding: 15;
+                                   -fx-border-color: #ccc;
+                                   -fx-border-radius: 10;
+                                   -fx-background-radius: 10;" />
+       </ScrollPane>
+
+    </VBox>
+
+</AnchorPane>

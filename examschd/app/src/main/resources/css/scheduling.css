@@ -1,0 +1,68 @@
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/Inter-Regular.ttf");
+}
+
+@font-face {
+    font-family: "Inter-SemiBold";
+    src: url("../fonts/Inter-SemiBold.ttf");
+}
+
+.root {
+    -fx-font-family: "Inter";
+    -fx-background-color: #F5F5F7;
+}
+
+.title {
+    -fx-font-size: 28px;
+    -fx-font-family: "Inter-SemiBold";
+    -fx-text-fill: #222;
+    -fx-padding: 20 0;
+}
+
+.card {
+    -fx-padding: 25;
+    -fx-background-color: #FFFFFFCC;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 20, 0.15, 0, 4);
+    -fx-min-width: 320;
+}
+
+.card-title {
+    -fx-font-size: 18px;
+    -fx-font-family: "Inter-SemiBold";
+    -fx-text-fill: #333;
+    -fx-padding: 0 0 10 0;
+}
+
+.primary-btn {
+    -fx-background-color: linear-gradient(to bottom, #4A90E2, #3C7BC6);
+    -fx-background-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+}
+
+.action-btn {
+    -fx-background-color: #f3f3f3;
+    -fx-border-color: #ddd;
+    -fx-background-radius: 10;
+    -fx-padding: 10 20;
+}
+
+.action-btn:hover {
+    -fx-background-color: #e7e7e7;
+}
+
+.search-field {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 6 10;
+}
+
+.schedule-table {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1;
+    -fx-background-radius: 10;
+}

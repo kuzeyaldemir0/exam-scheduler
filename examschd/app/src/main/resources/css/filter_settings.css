@@ -1,0 +1,131 @@
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/Inter-Regular.ttf");
+}
+
+@font-face {
+    font-family: "Inter-Medium";
+    src: url("../fonts/Inter-Medium.ttf");
+}
+
+@font-face {
+    font-family: "Inter-SemiBold";
+    src: url("../fonts/Inter-SemiBold.ttf");
+}
+
+/* GLOBAL ROOT */
+.root, .stack-pane, .pane {
+    -fx-font-family: "Inter";
+    -fx-background-color: transparent;
+}
+
+/* MAIN POPUP CONTAINER */
+.stack-pane {
+    -fx-background-radius: 18;
+}
+
+/* CARD STYLE */
+.card {
+    -fx-background-color: #F7F7F9;
+    -fx-background-radius: 14;
+    -fx-padding: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 22, 0.2, 0, 3);
+}
+
+/* TITLES */
+.title {
+    -fx-font-size: 22px;
+    -fx-font-family: "Inter-SemiBold";
+    -fx-text-fill: #222;
+}
+
+.section-title {
+    -fx-font-size: 15px;
+    -fx-font-family: "Inter-Medium";
+    -fx-text-fill: #333;
+    -fx-padding: 0 0 6 0;
+}
+
+/* LABELS */
+.label {
+    -fx-text-fill: #444;
+    -fx-font-size: 13px;
+}
+
+/* DATE PICKERS */
+.date-picker {
+    -fx-background-radius: 8;
+    -fx-padding: 4 8;
+}
+
+.date-picker .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.date-picker .text-field {
+    -fx-background-radius: 8;
+    -fx-padding: 6 8;
+}
+
+/* CHECKBOX */
+.check-box {
+    -fx-font-size: 13px;
+    -fx-text-fill: #333;
+}
+
+.check-box:selected .box {
+    -fx-border-color: #4A90E2;
+    -fx-background-color: #4A90E2;
+}
+
+/* SPINNERS */
+.spinner {
+    -fx-background-radius: 8;
+}
+
+.spinner .text-field {
+    -fx-background-radius: 8;
+    -fx-padding: 6 8;
+}
+
+.spinner .increment-arrow-button,
+.spinner .decrement-arrow-button {
+    -fx-background-color: transparent;
+}
+
+/* TEXTAREA */
+.text-area {
+    -fx-background-radius: 8;
+    -fx-padding: 6 8;
+}
+
+.text-area .content {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
+}
+
+/* BUTTONS */
+.button {
+    -fx-background-radius: 10;
+    -fx-font-family: "Inter-SemiBold";
+}
+
+/* CANCEL BUTTON */
+#cancelBtn {
+    -fx-background-color: #EEE;
+    -fx-text-fill: #444;
+}
+
+#cancelBtn:hover {
+    -fx-background-color: #DDD;
+}
+
+/* SAVE BUTTON */
+#saveBtn {
+    -fx-background-color: #4A90E2;
+    -fx-text-fill: white;
+}
+
+#saveBtn:hover {
+    -fx-background-color: #3C7BC6;
+}

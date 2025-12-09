@@ -1,7 +1,11 @@
 package examschd.controller;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 
@@ -22,18 +26,20 @@ public class FileSelectController {
     private File enrollmentsFile;
     private File studentsFile;
 
-
     private File selectCSV() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
-        return chooser.showOpenDialog(null);
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("CSV Files", "*.csv")
+        );
+
+        // Null yerine sahneyi kullanmak daha güvenli
+        return chooser.showOpenDialog(classroomsLabel.getScene().getWindow());
     }
 
     private void clearWarning() {
         warningBox.setVisible(false);
         warningLabel.setText("");
     }
-
 
     @FXML
     private void chooseClassroomsFile() {
@@ -71,7 +77,6 @@ public class FileSelectController {
         }
     }
 
-
     @FXML
     private void continueToScheduling() {
 
@@ -87,7 +92,22 @@ public class FileSelectController {
 
         clearWarning();
 
-        System.out.println("All files selected! Proceeding...");
+        try {
+            FXMLLoader loader =
+                    new FXMLLoader(getClass().getResource("/examschd/fxml/scheduling.fxml"));
 
+            Parent root = loader.load();
+
+            // Controller'a erişip dosyaları gönder
+            SchedulingController controller = loader.getController();
+            controller.initData(classroomsFile, coursesFile, enrollmentsFile, studentsFile);
+
+            Stage stage = (Stage) classroomsLabel.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

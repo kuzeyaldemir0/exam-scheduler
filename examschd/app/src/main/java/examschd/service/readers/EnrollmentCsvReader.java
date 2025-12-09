@@ -30,13 +30,11 @@ public class EnrollmentCsvReader {
 
                 String courseName = courseLine;
 
-                // İkinci satır = öğrenci listesi
                 String listLine = br.readLine();
                 if (listLine == null) break;
 
                 listLine = listLine.trim();
 
-                // Köşeli parantezleri temizle
                 listLine = listLine.replace("[", "")
                                    .replace("]", "")
                                    .replace("'", "");
