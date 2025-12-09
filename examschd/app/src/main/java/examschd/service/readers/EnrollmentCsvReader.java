@@ -2,46 +2,58 @@ package examschd.service.readers;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.List;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import examschd.model.Enrollment;
 
-public class EnrollmentCsvReader implements CsvReader<Enrollment> {
+public class EnrollmentCsvReader {
 
-    @Override
-    public List<Enrollment> read(String filePath) throws Exception {
+    public static List<Enrollment> read(String filePath) throws IOException {
+
         List<Enrollment> enrollments = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 
-            String line;
-            int counter=1;
-            while ((line = br.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith("ALL OF")) continue;
+            String courseLine;
+            int counter = 1;
 
-                // CourseCode_01 ['Std_ID_x', ...]
-                String[] parts = line.split("\\s+", 2);
+            while ((courseLine = br.readLine()) != null) {
 
-                String courseName = parts[0].trim();
-                String listPart = parts[1].trim();
+                courseLine = courseLine.trim();
 
-                // Remove brackets [ ]
-                listPart = listPart.replace("[", "")
+                if (courseLine.isEmpty()) continue;
+
+                if (!courseLine.startsWith("CourseCode_"))
+                    continue;
+
+                String courseName = courseLine;
+
+                // İkinci satır = öğrenci listesi
+                String listLine = br.readLine();
+                if (listLine == null) break;
+
+                listLine = listLine.trim();
+
+                // Köşeli parantezleri temizle
+                listLine = listLine.replace("[", "")
                                    .replace("]", "")
                                    .replace("'", "");
 
-                // Split by comma
-                List<String> studentNumbers = new ArrayList<>();
-                for (String s : listPart.split(",")) {
-                    studentNumbers.add(s.trim());
+                List<String> studentIds = new ArrayList<>();
+
+                for (String s : listLine.split(",")) {
+                    String cleaned = s.trim();
+                    if (!cleaned.isEmpty())
+                        studentIds.add(cleaned);
                 }
 
-                enrollments.add(new Enrollment(counter, studentNumbers, courseName));
+                enrollments.add(new Enrollment(counter, studentIds, courseName));
                 counter++;
             }
         }
+
         return enrollments;
     }
 }

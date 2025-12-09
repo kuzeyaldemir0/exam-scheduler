@@ -2,14 +2,15 @@ package examschd.service.readers;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
+
 import examschd.model.Student;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StudentCsvReader implements CsvReader<Student> {
+public class StudentCsvReader  {
 
-    @Override
-    public List<Student> read(String filePath) throws Exception {
+    public static List<Student> read(String filePath) throws IOException {
         List<Student> students = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 

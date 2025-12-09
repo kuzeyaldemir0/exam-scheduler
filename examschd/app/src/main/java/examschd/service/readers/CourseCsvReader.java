@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 
+
 import examschd.model.Course;
 
-public class CourseCsvReader implements CsvReader<Course> {
+public class CourseCsvReader {
 
-    @Override
-    public List<Course> read(String filePath) throws IOException {
+    public static List<Course> read(String filePath) throws IOException {
         List<Course> courses = new ArrayList<>();
         int courseIdCounter = 1;
 

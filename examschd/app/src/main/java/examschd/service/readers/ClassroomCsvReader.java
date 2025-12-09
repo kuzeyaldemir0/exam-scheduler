@@ -9,10 +9,9 @@ import java.util.ArrayList;
 
 import examschd.model.Classroom;
 
-public class ClassroomCsvReader implements CsvReader<Classroom> {
+public class ClassroomCsvReader{
 
-    @Override
-    public List<Classroom> read(String filePath) throws IOException {
+    public static List<Classroom> read(String filePath) throws IOException {
         List<Classroom> classrooms = new ArrayList<>();
         int classroomIdCounter = 1;
 
