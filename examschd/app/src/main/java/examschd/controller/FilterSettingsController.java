@@ -1,6 +1,7 @@
 package examschd.controller;
 
 import examschd.model.Course;
+import examschd.model.ExamConfig;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -15,6 +16,9 @@ public class FilterSettingsController {
     @FXML private VBox courseDurationList;
     @FXML private VBox examDaysList;
 
+    @FXML private Spinner<Integer> maxExamsSpinner;
+    @FXML private Spinner<Integer> breakTimeSpinner;
+
     private List<Course> courses = new ArrayList<>();
     private LocalDate startDate;
     private LocalDate endDate;
@@ -23,10 +27,49 @@ public class FilterSettingsController {
     private final Map<LocalDate, CheckBox> dayCheckboxes = new LinkedHashMap<>();
 
     private final Map<LocalDate, Boolean> savedExamDays = new LinkedHashMap<>();
+    private int savedMaxExams = 2;
+    private int savedBreakTime = 30;
 
-    public void setCourses(List<Course> list) {
-        this.courses = list;
+    public void initialize() {
+        setupExtraSpinners();
+    }
+
+    private void setupExtraSpinners() {
+        maxExamsSpinner.setValueFactory(
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 5, savedMaxExams)
+        );
+        breakTimeSpinner.setValueFactory(
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(10, 180, savedBreakTime)
+        );
+    }
+
+    public void loadSavedDurations(List<Course> list) {
+        courses = list;
         loadCourseDurationInputs();
+    }
+
+    private void loadCourseDurationInputs() {
+
+        courseDurationList.getChildren().clear();
+        durationSpinners.clear();
+
+        for (Course c : courses) {
+
+            Label lbl = new Label(c.getCourseName());
+            lbl.setPrefWidth(250);
+
+            Spinner<Integer> sp = new Spinner<>();
+            sp.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(
+                    30, 300, c.getDurationMinutes(), 1
+            ));
+            sp.setEditable(true);
+            sp.setPrefWidth(90);
+
+            HBox row = new HBox(20, lbl, sp);
+            courseDurationList.getChildren().add(row);
+
+            durationSpinners.put(c, sp);
+        }
     }
 
     public void setExamDateRange(LocalDate start, LocalDate end) {
@@ -35,36 +78,8 @@ public class FilterSettingsController {
         loadExamDays();
     }
 
-    private void loadCourseDurationInputs() {
-        courseDurationList.getChildren().clear();
-        durationSpinners.clear();
-
-        if (courses == null) return;
-
-        for (Course c : courses) {
-
-            Label lbl = new Label(c.getCourseName());
-            lbl.setStyle("-fx-font-size: 15px; -fx-font-weight: 500;");
-            lbl.setPrefWidth(250);
-
-            Spinner<Integer> sp = new Spinner<>();
-            sp.setValueFactory(
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(30, 300, c.getDurationMinutes(), 5)
-            );
-            sp.setPrefWidth(90);
-
-            HBox row = new HBox(20, lbl, sp);
-            row.setStyle("-fx-padding: 5 5 5 5;");
-
-            courseDurationList.getChildren().add(row);
-            durationSpinners.put(c, sp);
-        }
-    }
-
-    // -----------------------------------------------------------
-    // EXAM DAYS CHECKBOX LIST
-    // -----------------------------------------------------------
     private void loadExamDays() {
+
         examDaysList.getChildren().clear();
         dayCheckboxes.clear();
 
@@ -75,8 +90,7 @@ public class FilterSettingsController {
         while (!d.isAfter(endDate)) {
 
             CheckBox cb = new CheckBox(d.toString());
-            cb.setSelected(true); // default: sınav yapılabilir
-            cb.setStyle("-fx-font-size: 15px;");
+            cb.setSelected(savedExamDays.getOrDefault(d, true));
 
             examDaysList.getChildren().add(cb);
             dayCheckboxes.put(d, cb);
@@ -85,23 +99,52 @@ public class FilterSettingsController {
         }
     }
 
-    // -----------------------------------------------------------
-    // SAVE
-    // -----------------------------------------------------------
+    public void loadSavedExamDays(Map<LocalDate, Boolean> map) {
+        savedExamDays.clear();
+        savedExamDays.putAll(map);
+
+        if (startDate != null && endDate != null)
+            loadExamDays();
+    }
+
+    public void loadExtraSettings(int maxExams, int breakTime) {
+        savedMaxExams = maxExams;
+        savedBreakTime = breakTime;
+
+        maxExamsSpinner.getValueFactory().setValue(maxExams);
+        breakTimeSpinner.getValueFactory().setValue(breakTime);
+    }
+
+    public ExamConfig buildConfig() {
+
+        Map<String, Integer> durations = new LinkedHashMap<>();
+        for (Course c : courses) {
+            durations.put(c.getCourseName(), c.getDurationMinutes());
+        }
+
+        return new ExamConfig(
+                new LinkedHashMap<>(savedExamDays),   
+                savedMaxExams,                        
+                savedBreakTime,
+                durations                             
+        );
+    }
+
     @FXML
     private void saveSettings() {
 
-        // Save durations
         for (Course c : courses) {
             Spinner<Integer> sp = durationSpinners.get(c);
             if (sp != null) c.setDurationMinutes(sp.getValue());
         }
 
-        // Save allowed exam days
         savedExamDays.clear();
-        for (LocalDate d : dayCheckboxes.keySet()) {
-            savedExamDays.put(d, dayCheckboxes.get(d).isSelected());
-        }
+        dayCheckboxes.forEach((day, cb) ->
+                savedExamDays.put(day, cb.isSelected())
+        );
+
+        savedMaxExams = maxExamsSpinner.getValue();
+        savedBreakTime = breakTimeSpinner.getValue();
 
         closePopup();
     }
@@ -112,8 +155,7 @@ public class FilterSettingsController {
         st.close();
     }
 
-    // SchedulingController popup kapanınca buradan okur
-    public Map<LocalDate, Boolean> getExamAllowedDays() {
-        return savedExamDays;
-    }
+    public Map<LocalDate, Boolean> getExamAllowedDays() { return savedExamDays; }
+    public int getMaxExamsPerDay() { return savedMaxExams; }
+    public int getBreakTimeBetweenExams() { return savedBreakTime; }
 }

@@ -1,3 +1,6 @@
+/* -------------------------------------------
+   FONT DEFINITIONS
+------------------------------------------- */
 @font-face {
     font-family: "Inter";
     src: url("../fonts/Inter-Regular.ttf");
@@ -13,48 +16,65 @@
     src: url("../fonts/Inter-SemiBold.ttf");
 }
 
-/* GLOBAL ROOT */
+/* -------------------------------------------
+   GLOBAL ROOT STYLING
+------------------------------------------- */
 .root, .stack-pane, .pane {
     -fx-font-family: "Inter";
-    -fx-background-color: transparent;
+    -fx-background-color: #F5F5F7;
 }
 
-/* MAIN POPUP CONTAINER */
+/* 
+   Popup main container (Filter Settings Window)
+*/
 .stack-pane {
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 18;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 25, 0.18, 0, 4);
 }
 
-/* CARD STYLE */
-.card {
-    -fx-background-color: #F7F7F9;
-    -fx-background-radius: 14;
-    -fx-padding: 14;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 22, 0.2, 0, 3);
-}
-
-/* TITLES */
+/* -------------------------------------------
+   TITLES
+------------------------------------------- */
 .title {
     -fx-font-size: 22px;
     -fx-font-family: "Inter-SemiBold";
     -fx-text-fill: #222;
+    -fx-padding: 0 0 10 0;
 }
 
 .section-title {
     -fx-font-size: 15px;
     -fx-font-family: "Inter-Medium";
     -fx-text-fill: #333;
-    -fx-padding: 0 0 6 0;
+    -fx-padding: 10 0 6 0;
 }
 
-/* LABELS */
+/* -------------------------------------------
+   SECTIONS / PANELS
+------------------------------------------- */
+.card {
+    -fx-background-color: #FFFFFFCC;
+    -fx-background-radius: 14;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 20, 0.25, 0, 3);
+}
+
+/* -------------------------------------------
+   LABEL STYLE
+------------------------------------------- */
 .label {
     -fx-text-fill: #444;
     -fx-font-size: 13px;
 }
 
-/* DATE PICKERS */
+/* -------------------------------------------
+   DATE PICKER
+------------------------------------------- */
 .date-picker {
     -fx-background-radius: 8;
+    -fx-background-color: white;
     -fx-padding: 4 8;
 }
 
@@ -65,12 +85,19 @@
 .date-picker .text-field {
     -fx-background-radius: 8;
     -fx-padding: 6 8;
+    -fx-background-color: white;
 }
 
-/* CHECKBOX */
+/* -------------------------------------------
+   CHECKBOXES
+------------------------------------------- */
 .check-box {
     -fx-font-size: 13px;
     -fx-text-fill: #333;
+}
+
+.check-box .box {
+    -fx-background-radius: 4;
 }
 
 .check-box:selected .box {
@@ -78,9 +105,12 @@
     -fx-background-color: #4A90E2;
 }
 
-/* SPINNERS */
+/* -------------------------------------------
+   SPINNERS
+------------------------------------------- */
 .spinner {
     -fx-background-radius: 8;
+    -fx-background-color: white;
 }
 
 .spinner .text-field {
@@ -93,24 +123,29 @@
     -fx-background-color: transparent;
 }
 
-/* TEXTAREA */
+/* -------------------------------------------
+   TEXT AREA
+------------------------------------------- */
 .text-area {
     -fx-background-radius: 8;
     -fx-padding: 6 8;
 }
 
 .text-area .content {
-    -fx-background-color: #ffffff;
     -fx-background-radius: 8;
+    -fx-background-color: #ffffff;
 }
 
-/* BUTTONS */
+/* -------------------------------------------
+   BUTTONS
+------------------------------------------- */
 .button {
     -fx-background-radius: 10;
     -fx-font-family: "Inter-SemiBold";
+    -fx-font-size: 14px;
 }
 
-/* CANCEL BUTTON */
+/* CANCEL BUTTON (Gray) */
 #cancelBtn {
     -fx-background-color: #EEE;
     -fx-text-fill: #444;
@@ -120,7 +155,7 @@
     -fx-background-color: #DDD;
 }
 
-/* SAVE BUTTON */
+/* SAVE BUTTON (Blue – same as scheduling.css) */
 #saveBtn {
     -fx-background-color: #4A90E2;
     -fx-text-fill: white;
@@ -128,4 +163,10 @@
 
 #saveBtn:hover {
     -fx-background-color: #3C7BC6;
+}
+
+#saveBtn:pressed {
+    -fx-background-color: #336da8;
+    -fx-effect: none;
+    -fx-padding: 11 20 9 20; /* small push effect */
 }

@@ -32,7 +32,6 @@ public class FileSelectController {
                 new FileChooser.ExtensionFilter("CSV Files", "*.csv")
         );
 
-        // Null yerine sahneyi kullanmak daha güvenli
         return chooser.showOpenDialog(classroomsLabel.getScene().getWindow());
     }
 
@@ -98,7 +97,6 @@ public class FileSelectController {
 
             Parent root = loader.load();
 
-            // Controller'a erişip dosyaları gönder
             SchedulingController controller = loader.getController();
             controller.initData(classroomsFile, coursesFile, enrollmentsFile, studentsFile);
 
