@@ -1,8 +1,12 @@
 package examschd.service.readers;
 
-import java.io.BufferedReader;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvValidationException;
+
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import examschd.model.Student;
 import java.util.ArrayList;
@@ -12,18 +16,32 @@ public class StudentCsvReader  {
 
     public static List<Student> read(String filePath) throws IOException {
         List<Student> students = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 
-            String line;
-            int counter=1;
-            while ((line = br.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith("ALL OF")) continue;
+        try (CSVReader reader = new CSVReaderBuilder(
+                new FileReader(filePath, StandardCharsets.UTF_8)
+        ).build()) {
 
-                students.add(new Student(counter, line));
-                counter++;
+            String[] line;
+            int counter = 1;
+
+            while ((line = reader.readNext()) != null) {
+
+                if (line.length == 0) continue;
+
+                String value = line[0].trim();
+
+                // empty or irrelevant lines
+                if (value.isEmpty() || value.startsWith("ALL OF")) continue;
+
+                students.add(new Student(counter++, value));
             }
+
+        } catch (CsvValidationException e) {
+            throw new RuntimeException(
+                    "Invalid CSV format in students file", e
+            );
         }
+
         return students;
     }
 }
