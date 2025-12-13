@@ -12,7 +12,7 @@ public class ClassroomDAOImpl implements ClassroomDAO {
 
     @Override
     public void insert(Classroom classroom) throws SQLException {
-        String sql = "INSERT INTO Classroom (name, capacity) VALUES (?, ?)";
+        String sql = "INSERT INTO Classroom (classroom_name, capacity) VALUES (?, ?)";
 
         try (Connection conn = DB.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -27,18 +27,20 @@ public class ClassroomDAOImpl implements ClassroomDAO {
     public List<Classroom> getAll() throws SQLException {
         List<Classroom> list = new ArrayList<>();
 
-        String sql = "SELECT id, name, capacity FROM Classroom";
+        String sql = "SELECT classroom_name, capacity FROM Classroom";
 
         try (Connection conn = DB.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
+            int id = 1;
             while (rs.next()) {
                 Classroom c = new Classroom(
-                        rs.getInt("id"),
-                        rs.getString("name"),
+                        id,
+                        rs.getString("classroom_name"),
                         rs.getInt("capacity")
                 );
+                id++;
                 list.add(c);
             }
         }

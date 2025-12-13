@@ -6,7 +6,7 @@ import java.util.List;
 public class Student {
     // Attributes (Private as per UML red square)
     private int studentId;
-    private String studentNumber;
+    private String studentName;
 
     // Relationship: One student has many courses
     private List<Course> enrolledCourses;
@@ -14,9 +14,9 @@ public class Student {
     private List<StudentAssignment> assignments;
 
     // Constructor
-    public Student(int studentId, String studentNumber) {
+    public Student(int studentId, String studentName) {
         this.studentId = studentId;
-        this.studentNumber = studentNumber;
+        this.studentName = studentName;
         this.enrolledCourses = new ArrayList<>();
         this.assignments = new ArrayList<>();
     }
@@ -38,8 +38,8 @@ public class Student {
         return studentId;
     }
 
-    public String getStudentNumber() {
-        return studentNumber;
+    public String getStudentName() {
+        return studentName;
     }
 
     public List<StudentAssignment> getAssignments() {
@@ -53,13 +53,5 @@ public class Student {
 
     public void setId(int id) {
         this.studentId = id;
-    }
-
-    public String getName() {
-        return studentNumber;
-    }
-
-    public void setName(String name) {
-        this.studentNumber = name;
     }
 }

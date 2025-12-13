@@ -76,3 +76,8 @@ $RECYCLE.BIN/
 System Volume Information/
 *.lnk
 
+############################
+# database files
+############################
+app/examscheduler.db
+

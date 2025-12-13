@@ -11,6 +11,8 @@ import javafx.scene.layout.HBox;
 
 import java.io.File;
 
+import examschd.db.DBInitializer;
+
 public class FileSelectController {
 
     @FXML private Label classroomsLabel;
@@ -25,6 +27,11 @@ public class FileSelectController {
     private File coursesFile;
     private File enrollmentsFile;
     private File studentsFile;
+
+    // Initialize database
+    public void initialize() {
+        DBInitializer.initialize(); 
+    }
 
     private File selectCSV() {
         FileChooser chooser = new FileChooser();

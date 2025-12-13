@@ -6,6 +6,8 @@ import examschd.model.Enrollment;
 import examschd.model.Student;
 import examschd.model.ExamConfig;
 
+import examschd.service.ImportService;
+
 import examschd.service.readers.*;
 
 import javafx.collections.FXCollections;
@@ -23,6 +25,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -56,24 +59,49 @@ public class SchedulingController {
 
     private ExamConfig userConfig = new ExamConfig();  
 
+    private final ImportService importService = new ImportService();
+
     @FXML
     public void initialize() {
         setupListeners();
     }
 
     public void initData(File classroomsFile,
-                         File coursesFile,
-                         File enrollmentsFile,
-                         File studentsFile) {
+                     File coursesFile,
+                     File enrollmentsFile,
+                     File studentsFile)   throws IOException, SQLException {
 
         try {
-            allClassrooms   = ClassroomCsvReader.read(classroomsFile.getAbsolutePath());
-            allCourses      = CourseCsvReader.read(coursesFile.getAbsolutePath());
-            allEnrollments  = EnrollmentCsvReader.read(enrollmentsFile.getAbsolutePath());
-            allStudentsList = StudentCsvReader.read(studentsFile.getAbsolutePath());
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
+            // Mevcut verileri yükle
+            importService.loadExistingData();
+
+            System.out.println("Importing data from CSV files if needed...");
+            importService.importStudents(studentsFile.getAbsolutePath());
+            importService.importCourses(coursesFile.getAbsolutePath());
+            importService.importClassrooms(classroomsFile.getAbsolutePath());
+            importService.importEnrollments(enrollmentsFile.getAbsolutePath());
+
+            // DB’den güncel verileri al
+            allStudentsList = importService.getAllStudents();
+            allCourses = importService.getAllCourses();
+            allClassrooms = importService.getAllClassrooms();
+            allEnrollments = importService.getAllEnrollments();
+
+            if (allStudentsList == null) allStudentsList = new ArrayList<>();
+            if (allCourses == null) allCourses = new ArrayList<>();
+            if (allClassrooms == null) allClassrooms = new ArrayList<>();
+            if (allEnrollments == null) allEnrollments = new ArrayList<>();
+
+        } catch (SQLException e) {
+            System.err.println("Database error while loading data");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Import error");
+            e.printStackTrace();
         }
+        
+        studentIds.clear();
+        classroomNames.clear();
 
         for (Student s : allStudentsList) studentIds.add(s.getId());
         for (Classroom c : allClassrooms) classroomNames.add(c.getName());
@@ -82,7 +110,6 @@ public class SchedulingController {
         classroomCombo.setItems(classroomNames);
 
         setupSearchFilters();
-
         initDefaultConfig();
     }
 

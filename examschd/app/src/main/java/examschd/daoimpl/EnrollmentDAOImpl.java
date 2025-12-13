@@ -2,7 +2,10 @@ package examschd.daoimpl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import examschd.dao.EnrollmentDAO;
 import examschd.db.DB;
@@ -19,13 +22,36 @@ public class EnrollmentDAOImpl implements EnrollmentDAO {
              PreparedStatement ps = conn.prepareStatement(INSERT_SQL)) {
 
             int[] studentIds = enrollment.getStudentIds();
-            String courseName = enrollment.getCourseName();
+            String courseId = enrollment.getCourseName(); // ImportService'ten map ile ID gelmiş olmalı
 
             for (int studentId : studentIds) {
-                ps.setInt(1, studentId);   // Öğrenci ID
-                ps.setString(2, courseName);    // Ders ID
-                ps.executeUpdate();        // Her öğrenci için insert
+                ps.setInt(1, studentId);
+                ps.setString(2, courseId); // artık course_id
+                ps.executeUpdate();
             }
         }
+    }
+
+    // ✅ SADECE EKLENEN KISIM
+    @Override
+    public List<Enrollment> getAll() {
+        List<Enrollment> list = new ArrayList<>();
+
+        String sql = "SELECT student_id, course_id FROM Enrollments";
+
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Enrollment e = new Enrollment(new int[]{ rs.getInt("student_id") }, rs.getString("course_id"));
+                list.add(e);
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        return list;
     }
 }

@@ -21,6 +21,12 @@ public class Enrollment {
         this.courseName = courseName;
     }
 
+    // DAO için constructor
+    public Enrollment(int[] studentIds, String courseName) {
+        this.studentIds = studentIds;
+        this.courseName = courseName;
+    }
+
     // Getter / Setter
     public int getEnrollmentId() { return enrollmentId; }
     public void setEnrollmentId(int id) { this.enrollmentId = id; }
