@@ -2,28 +2,40 @@
 
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.geometry.*?>
 
 <AnchorPane xmlns:fx="http://javafx.com/fxml"
             fx:id="rootPane"
             fx:controller="examschd.controller.SchedulingController"
-            prefWidth="1100" prefHeight="800"
             stylesheets="@../../css/scheduling.css">
 
-    <VBox spacing="30" alignment="TOP_CENTER"
-          prefWidth="1100" layoutY="20">
+    <VBox spacing="25"
+          alignment="TOP_CENTER"
+          AnchorPane.topAnchor="20"
+          AnchorPane.leftAnchor="20"
+          AnchorPane.rightAnchor="20"
+          AnchorPane.bottomAnchor="20">
 
         <!-- TITLE -->
         <Label text="Exam Scheduler — Dashboard"
                styleClass="title"/>
 
-        <!-- FILTER BUTTON -->
-        <Button fx:id="openFiltersBtn"
-                text="Filter Settings"
-                styleClass="blue-button"/>
+        <!-- FILTER + IMPORT ROW -->
+        <HBox spacing="15" alignment="CENTER">
+            <Button fx:id="openFiltersBtn"
+                    text="Filter Settings"
+                    styleClass="blue-button"/>
+
+            <Button fx:id="importBtn"
+                    text="Import all data"
+                    onAction="#openImportPopup"
+                    styleClass="blue-button"/>
+        </HBox>
 
         <!-- SEARCH PANEL -->
-        <HBox spacing="40" alignment="CENTER">
+        <FlowPane hgap="40"
+                  vgap="30"
+                  alignment="CENTER"
+                  prefWrapLength="900">
 
               <!-- STUDENT CARD -->
               <VBox spacing="12" styleClass="card">
@@ -85,11 +97,10 @@
                              styleClass="action-btn"/>
               </VBox>
 
-        </HBox>
+        </FlowPane>
 
         <!-- SCHEDULE TABLE -->
-        <ScrollPane fitToWidth="true" fitToHeight="true"
-                    prefWidth="980" prefHeight="550">
+        <ScrollPane fitToWidth="true" fitToHeight="true">
               <GridPane fx:id="scheduleGrid"
                         hgap="6" vgap="6"
                         styleClass="schedule-table"/>

@@ -38,6 +38,7 @@ public class SchedulingController {
 
     @FXML private Button openFiltersBtn;
     @FXML private Button applyDateRangeBtn;
+    @FXML private Button importBtn;
 
     @FXML private TextField studentSearchField;
     @FXML private ComboBox<Integer> studentCombo;
@@ -64,7 +65,81 @@ public class SchedulingController {
     @FXML
     public void initialize() {
         setupListeners();
+        loadExistingDataOnStartup();
     }
+
+    private void loadExistingDataOnStartup() {
+        try {
+            // DB'deki mevcut verileri yükle
+            importService.loadExistingData();
+
+            allStudentsList = importService.getAllStudents();
+            allCourses = importService.getAllCourses();
+            allClassrooms = importService.getAllClassrooms();
+            allEnrollments = importService.getAllEnrollments();
+
+            if (allStudentsList == null) allStudentsList = new ArrayList<>();
+            if (allCourses == null) allCourses = new ArrayList<>();
+            if (allClassrooms == null) allClassrooms = new ArrayList<>();
+            if (allEnrollments == null) allEnrollments = new ArrayList<>();
+
+            // ComboBox verileri
+            studentIds.clear();
+            classroomNames.clear();
+
+            for (Student s : allStudentsList)
+                studentIds.add(s.getId());
+
+            for (Classroom c : allClassrooms)
+                classroomNames.add(c.getName());
+
+            studentCombo.setItems(studentIds);
+            classroomCombo.setItems(classroomNames);
+
+            setupSearchFilters();
+            initDefaultConfig();
+
+            System.out.println("Existing data loaded on startup.");
+
+        } catch (SQLException e) {
+            System.err.println("Failed to load existing data on startup.");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void openImportPopup() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/examschd/fxml/file_select.fxml")
+            );
+
+            Parent root = loader.load();
+
+            FileSelectController ctrl = loader.getController();
+
+            Stage popup = new Stage();
+            popup.initModality(Modality.APPLICATION_MODAL);
+            popup.setTitle("Import CSV Files");
+            popup.setScene(new Scene(root));
+            popup.setResizable(false);
+
+            popup.showAndWait();
+
+            if (ctrl.hasAllFilesSelected()) {
+                initData(
+                    ctrl.getClassroomsFile(),
+                    ctrl.getCoursesFile(),
+                    ctrl.getEnrollmentsFile(),
+                    ctrl.getStudentsFile()
+                );
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void initData(File classroomsFile,
                      File coursesFile,

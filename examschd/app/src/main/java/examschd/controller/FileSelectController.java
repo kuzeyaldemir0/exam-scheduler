@@ -33,6 +33,19 @@ public class FileSelectController {
         DBInitializer.initialize(); 
     }
 
+    public boolean hasAllFilesSelected() {
+        return classroomsFile != null &&
+            coursesFile != null &&
+            enrollmentsFile != null &&
+            studentsFile != null;
+    }
+
+    public File getClassroomsFile() { return classroomsFile; }
+    public File getCoursesFile() { return coursesFile; }
+    public File getEnrollmentsFile() { return enrollmentsFile; }
+    public File getStudentsFile() { return studentsFile; }
+
+
     private File selectCSV() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(
@@ -86,11 +99,7 @@ public class FileSelectController {
     @FXML
     private void continueToScheduling() {
 
-        if (classroomsFile == null ||
-            coursesFile == null ||
-            enrollmentsFile == null ||
-            studentsFile == null) {
-
+        if (!hasAllFilesSelected()) {
             warningLabel.setText("Please select all files before continuing.");
             warningBox.setVisible(true);
             return;
@@ -98,21 +107,7 @@ public class FileSelectController {
 
         clearWarning();
 
-        try {
-            FXMLLoader loader =
-                    new FXMLLoader(getClass().getResource("/examschd/fxml/scheduling.fxml"));
-
-            Parent root = loader.load();
-
-            SchedulingController controller = loader.getController();
-            controller.initData(classroomsFile, coursesFile, enrollmentsFile, studentsFile);
-
-            Stage stage = (Stage) classroomsLabel.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Stage stage = (Stage) classroomsLabel.getScene().getWindow();
+        stage.close();
     }
 }

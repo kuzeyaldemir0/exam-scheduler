@@ -11,9 +11,11 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("/examschd/fxml/file_select.fxml"));
         DBInitializer.initialize();
+        Parent root = FXMLLoader.load(getClass().getResource("/examschd/fxml/scheduling.fxml"));
         stage.setScene(new Scene(root));
+        stage.setMinWidth(750);
+        stage.setMinHeight(520);
         stage.setTitle("Exam Scheduler");
         stage.show();
     }
