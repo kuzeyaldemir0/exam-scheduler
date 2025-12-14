@@ -7,9 +7,8 @@ public class Course {
     private int courseId;
     private String courseName;
 
-    // Relationship: One course has many students
-    private List<Student> enrolledStudents;
-    // Relationship: One course has many exam sessions
+    // CHANGED: Now holds Enrollments instead of Students directly
+    private List<Enrollment> enrollments;
     private List<ExamSession> examSessions;
 
     // Constructor
@@ -46,6 +45,7 @@ public class Course {
         if (!enrolledStudents.contains(student)) {
             enrolledStudents.add(student);
         }
+        return students;
     }
 
     public List<ExamSession> getExamSessions() {
