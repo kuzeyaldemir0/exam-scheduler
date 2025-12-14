@@ -29,6 +29,11 @@
                     text="Import all data"
                     onAction="#openImportPopup"
                     styleClass="blue-button"/>
+
+            <Button fx:id="generateBtn"
+                    text="Generate Schedule"
+                    onAction="#onGenerateSchedule"
+                    styleClass="blue-button"/>
         </HBox>
 
         <!-- ================= SEARCH CARDS (YAN YANA) ================= -->

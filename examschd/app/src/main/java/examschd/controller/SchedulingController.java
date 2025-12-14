@@ -3,10 +3,12 @@ package examschd.controller;
 import examschd.model.Classroom;
 import examschd.model.Course;
 import examschd.model.Enrollment;
+import examschd.model.ExamSession;
 import examschd.model.Student;
 import examschd.model.ExamConfig;
 
 import examschd.service.ImportService;
+import examschd.service.Scheduler;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -37,6 +39,7 @@ public class SchedulingController {
     @FXML private Button openFiltersBtn;
     @FXML private Button applyDateRangeBtn;
     @FXML private Button importBtn;
+    @FXML private Button generateBtn;
 
     @FXML private TextField studentSearchField;
     @FXML private ComboBox<Integer> studentCombo;
@@ -59,6 +62,7 @@ public class SchedulingController {
     private ExamConfig userConfig = new ExamConfig();  
 
     private final ImportService importService = new ImportService();
+    private final Scheduler scheduler = new Scheduler();
 
     @FXML
     public void initialize() {
@@ -334,5 +338,72 @@ public class SchedulingController {
         }
 
         renderEmptySchedule(start, end);
+    }
+
+    @FXML
+    private void onGenerateSchedule() {
+        // Validate we have data
+        if (allCourses == null || allCourses.isEmpty()) {
+            System.out.println("No courses loaded. Please import data first.");
+            return;
+        }
+
+        if (userConfig.getAllowedExamDays().isEmpty()) {
+            System.out.println("No exam days configured. Please set date range first.");
+            return;
+        }
+
+        System.out.println("Generating schedule with " + allCourses.size() + " courses...");
+
+        // Call the scheduler
+        Map<LocalDate, List<ExamSession>> schedule = scheduler.generateSchedule(
+            allStudentsList,
+            allCourses,
+            allClassrooms,
+            allEnrollments,
+            userConfig
+        );
+
+        // Render results
+        renderSchedule(schedule);
+    }
+
+    private void renderSchedule(Map<LocalDate, List<ExamSession>> schedule) {
+        // First render the empty grid if not already done
+        if (dayColumnMap.isEmpty()) {
+            LocalDate start = startDatePicker.getValue();
+            LocalDate end = endDatePicker.getValue();
+            if (start != null && end != null) {
+                renderEmptySchedule(start, end);
+            }
+        }
+
+        // Add exam sessions to the grid
+        for (Map.Entry<LocalDate, List<ExamSession>> entry : schedule.entrySet()) {
+            LocalDate day = entry.getKey();
+            List<ExamSession> sessions = entry.getValue();
+
+            VBox dayBox = dayColumnMap.get(day);
+            if (dayBox == null) continue;
+
+            for (ExamSession session : sessions) {
+                String courseName = session.getCourse().getCourseName();
+                String slotInfo = session.getTimeSlot();
+                int studentCount = session.getCourse().getStudents().size();
+
+                Label examLabel = new Label(courseName + " (" + slotInfo + ")");
+                examLabel.setStyle("-fx-background-color: #E3F2FD; -fx-padding: 8; " +
+                                   "-fx-background-radius: 4; -fx-font-size: 12;");
+                examLabel.setMaxWidth(Double.MAX_VALUE);
+
+                Tooltip tooltip = new Tooltip("Students: " + studentCount +
+                                              "\nDuration: " + session.getCourse().getDurationMinutes() + " min");
+                Tooltip.install(examLabel, tooltip);
+
+                dayBox.getChildren().add(examLabel);
+            }
+        }
+
+        System.out.println("Schedule rendered on grid.");
     }
 }

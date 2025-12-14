@@ -126,7 +126,7 @@ public class ImportService {
                 continue; // bilinmeyen kursu atla
             }
 
-            e.setCourseName(courseIdInt.toString());
+            // Keep the actual course name (already set from CSV), don't overwrite with ID
 
             enrollmentDAO.insert(e);
         }
