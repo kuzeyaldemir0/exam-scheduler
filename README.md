@@ -1,69 +1,145 @@
-# Exam Scheduler – Project Document 📑
+# Exam Scheduler
 
-## 1. Purpose of the Project
+A desktop application for generating conflict-free exam timetables with automatic classroom assignment.
 
-The **Exam Scheduler** system assists student affairs staff in creating conflict-free exam timetables. It ensures that:
+## Features
 
-* Students do not have overlapping exams,
-* Rooms are assigned appropriately based on capacity,
-* Exams are placed into valid time slots,
-* The exam week schedule can be viewed clearly in a structured calendar format.
+### Implemented
+- **CSV Import**: Students, courses, classrooms, enrollments
+- **Greedy Scheduling Algorithm**: Largest courses first
+- **Constraint Checking**:
+  - No student conflicts (same time slot)
+  - Max 2 exams per day per student
+  - No back-to-back exams
+- **Classroom Assignment**: Automatic bin-packing by capacity
+- **Room Splitting**: Large courses split across multiple classrooms
+- **Calendar View**: Visual grid showing scheduled exams
 
----
+### Pending
+- Student schedule view (filter by student ID)
+- Classroom schedule view (filter by room)
+- PDF/CSV export
+- Backtracking algorithm for hard cases
 
-## 2. Project Overview
+## Tech Stack
 
-The Exam Scheduler is a **desktop application built using Java and JavaFX**. The main workflow:
+| Component | Technology |
+|-----------|------------|
+| Language | Java 21 |
+| GUI | JavaFX |
+| Database | SQLite |
+| Build | Gradle |
+| Testing | JUnit 5 |
 
-1. Student affairs uploads CSV data (students, courses, classrooms, attendance lists).
-2. The system analyzes conflicts, capacities, and time slot availability.
-3. A weekly exam schedule is generated.
-4. Staff can view, filter, export, and revise the schedule.
+## Project Structure
 
-Main modules:
+```
+examschd/app/src/main/java/examschd/
+├── controller/
+│   ├── SchedulingController.java   # Main dashboard
+│   ├── FileSelectController.java   # CSV import popup
+│   └── FilterSettingsController.java
+├── service/
+│   ├── Scheduler.java              # Scheduling algorithm
+│   ├── ImportService.java          # CSV → DB pipeline
+│   └── readers/                    # CSV parsers
+├── model/
+│   ├── Student.java
+│   ├── Course.java
+│   ├── Classroom.java
+│   ├── Enrollment.java
+│   ├── ExamSession.java            # Scheduled exam
+│   ├── ExamPartition.java          # Room assignment
+│   └── ExamConfig.java             # User settings
+├── dao/                            # Database interfaces
+├── daoimpl/                        # SQLite implementations
+└── db/
+    └── DBInitializer.java          # Schema creation
+```
 
-* **Data Import Module** – Handles CSV inputs.
-* **Scheduling Engine** – Detects conflicts and assigns slots.
-* **Calendar View** – Displays the generated weekly exam schedule.
-* **Export Module** – Outputs PDF/CSV reports.
+## Algorithm
 
----
+**Greedy with Constraint Propagation**
 
-## 3. User Role
+1. Sort courses by enrollment (largest first)
+2. For each course, try day/slot combinations:
+   - Check: No student has exam at same time
+   - Check: No student exceeds max exams/day
+   - Check: No back-to-back exams for any student
+   - Check: Sufficient classroom capacity available
+3. Assign classrooms using bin-packing (largest rooms first)
+4. Split across multiple rooms if needed
 
-### **Student Affairs Staff (Single User Role)**
+**Time Complexity**: O(courses × days × slots × students)
 
-Since this project focuses only on exam scheduling, there is **one primary user type: Student Affairs Staff**.
+## CSV Format
 
-#### Responsibilities:
+**students.csv**
+```
+ALL OF THE STUDENTS IN THE SYSTEM
+Std_ID_001
+Std_ID_002
+...
+```
 
-* Upload required CSV files (students, courses, classrooms, attendance).
-* Start the scheduling process.
-* Review conflicts and warnings.
-* Manually adjust exam slots if needed.
-* Export the final exam schedule.
-* Allow student affairs to filter and search.
+**courses.csv**
+```
+ALL OF THE COURSES IN THE SYSTEM
+CourseCode_01
+CourseCode_02
+...
+```
 
-There are **no students or instructors logging into the system**. The system is operated solely by student affairs.
+**classrooms.csv** (tab-separated)
+```
+ALL OF THE CLASSROOMS; AND THEIR CAPACITIES IN THE SYSTEM
+Classroom_01;40
+Classroom_02;40
+...
+```
 
----
+**enrollments.csv**
+```
+CourseCode_01
+['Std_ID_001', 'Std_ID_002', ...]
 
-## 4. Technical Notes
+CourseCode_02
+['Std_ID_003', 'Std_ID_004', ...]
+```
 
-* **Language:** Java
-* **GUI:** JavaFX (Scene Builder used for layout)
-* **Data Source:** CSV files
-* **Export:** PDF/CSV
-* **Database:** SQLite 
+## Running
 
----
+```bash
+cd examschd
+./gradlew run
+```
 
-## 5. Application Pages (JavaFX Screens)
+## Testing
 
-* **CSV Upload Page** – Choose and validate student/course/classroom CSVs.
-* **Schedule Page** – Generate weekly exam timetable.
-* **Calendar View** – Show Mon–Sun grid with time slots.
-* **Warnings Panel** – Display errors/conflicts.
-* **Export Page** – Export PDF/CSV.
+```bash
+./gradlew test
+```
 
----
+Tests verify:
+- CSV data scheduling
+- Classroom splitting (100 students → multiple 30-capacity rooms)
+- Student conflict detection
+- Classroom reuse across slots
+- Insufficient capacity handling
+
+## Configuration (ExamConfig)
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| maxExamsPerDay | 2 | Max exams per student per day |
+| slotsPerDay | 6 | Time slots available each day |
+| breakTimeBetweenExams | 30 | Minutes between exams (unused) |
+| allowedExamDays | User-set | Which dates are exam days |
+| courseDurations | 120 min | Per-course exam duration |
+
+## Key Decisions
+
+1. **Greedy over Backtracking**: Simpler, faster for typical cases. Backtracking planned for edge cases.
+2. **SQLite for Persistence**: Lightweight, no server needed. Data survives between sessions.
+3. **Bin-packing for Rooms**: Largest rooms first minimizes room count.
+4. **6 Slots/Day**: Hardcoded for now, configurable later.
