@@ -14,8 +14,8 @@ public class App extends Application {
         DBInitializer.initialize();
         Parent root = FXMLLoader.load(getClass().getResource("/examschd/fxml/scheduling.fxml"));
         stage.setScene(new Scene(root));
-        stage.setMinWidth(750);
-        stage.setMinHeight(520);
+        stage.setMinWidth(1200);
+        stage.setMinHeight(800);
         stage.setTitle("Exam Scheduler");
         stage.show();
     }

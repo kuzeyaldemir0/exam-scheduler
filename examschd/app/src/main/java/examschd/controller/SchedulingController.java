@@ -8,8 +8,6 @@ import examschd.model.ExamConfig;
 
 import examschd.service.ImportService;
 
-import examschd.service.readers.*;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 

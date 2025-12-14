@@ -15,11 +15,11 @@
           AnchorPane.rightAnchor="20"
           AnchorPane.bottomAnchor="20">
 
-        <!-- TITLE -->
+        <!-- ================= TITLE ================= -->
         <Label text="Exam Scheduler — Dashboard"
                styleClass="title"/>
 
-        <!-- FILTER + IMPORT ROW -->
+        <!-- ================= FILTER + IMPORT ================= -->
         <HBox spacing="15" alignment="CENTER">
             <Button fx:id="openFiltersBtn"
                     text="Filter Settings"
@@ -31,80 +31,84 @@
                     styleClass="blue-button"/>
         </HBox>
 
-        <!-- SEARCH PANEL -->
-        <FlowPane hgap="40"
-                  vgap="30"
-                  alignment="CENTER"
-                  prefWrapLength="900">
+        <!-- ================= SEARCH CARDS (YAN YANA) ================= -->
+        <HBox spacing="40" alignment="CENTER">
 
-              <!-- STUDENT CARD -->
-              <VBox spacing="12" styleClass="card">
+            <!-- STUDENT CARD -->
+            <VBox spacing="12" styleClass="card">
 
-                     <Label text="Student Schedule" styleClass="card-title"/>
+                <Label text="Student Schedule" styleClass="card-title"/>
 
-                     <TextField fx:id="studentSearchField"
-                                promptText="Search by student ID..."
-                                styleClass="search-field"/>
+                <TextField fx:id="studentSearchField"
+                           promptText="Search by student ID..."
+                           styleClass="search-field"/>
 
-                     <ComboBox fx:id="studentCombo"
-                               promptText="Select Student"
-                               prefWidth="260"/>
+                <ComboBox fx:id="studentCombo"
+                          promptText="Select Student"
+                          prefWidth="260"/>
 
-                     <Button fx:id="showStudentBtn"
-                             text="Show Schedule"
-                             prefWidth="260"
-                             styleClass="action-btn"/>
-              </VBox>
+                <Button fx:id="showStudentBtn"
+                        text="Show Schedule"
+                        prefWidth="260"
+                        styleClass="action-btn"/>
+            </VBox>
 
-              <!-- DATE RANGE CARD -->
-              <VBox spacing="12" styleClass="card">
+            <!-- DATE RANGE CARD -->
+            <VBox spacing="12" styleClass="card">
 
-                  <Label text="Exam Date Range" styleClass="card-title"/>
+                <Label text="Exam Date Range" styleClass="card-title"/>
 
-                  <HBox spacing="10" alignment="CENTER_LEFT">
-                       <Label text="Start:"/>
-                       <DatePicker fx:id="startDatePicker" prefWidth="180"/>
-                  </HBox>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Start:"/>
+                    <DatePicker fx:id="startDatePicker" prefWidth="180"/>
+                </HBox>
 
-                  <HBox spacing="10" alignment="CENTER_LEFT">
-                       <Label text="End:"/>
-                       <DatePicker fx:id="endDatePicker" prefWidth="180"/>
-                  </HBox>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="End:"/>
+                    <DatePicker fx:id="endDatePicker" prefWidth="180"/>
+                </HBox>
 
-                        <Button fx:id="applyDateRangeBtn"
-        text="Apply Date Range"
-        prefWidth="240"
-        styleClass="action-btn"/>
+                <Button fx:id="applyDateRangeBtn"
+                        text="Apply Date Range"
+                        prefWidth="240"
+                        styleClass="action-btn"/>
+            </VBox>
 
-              </VBox>
+            <!-- CLASSROOM CARD -->
+            <VBox spacing="12" styleClass="card">
 
-              <!-- CLASSROOM CARD -->
-              <VBox spacing="12" styleClass="card">
+                <Label text="Classroom Schedule" styleClass="card-title"/>
 
-                     <Label text="Classroom Schedule" styleClass="card-title"/>
+                <TextField fx:id="classroomSearchField"
+                           promptText="Search classroom name..."
+                           styleClass="search-field"/>
 
-                     <TextField fx:id="classroomSearchField"
-                                promptText="Search classroom name..."
-                                styleClass="search-field"/>
+                <ComboBox fx:id="classroomCombo"
+                          promptText="Select Classroom"
+                          prefWidth="260"/>
 
-                     <ComboBox fx:id="classroomCombo"
-                               promptText="Select Classroom"
-                               prefWidth="260"/>
+                <Button fx:id="showClassroomBtn"
+                        text="Show Schedule"
+                        prefWidth="260"
+                        styleClass="action-btn"/>
+            </VBox>
 
-                     <Button fx:id="showClassroomBtn"
-                             text="Show Schedule"
-                             prefWidth="260"
-                             styleClass="action-btn"/>
-              </VBox>
+        </HBox>
 
-        </FlowPane>
+        <!-- ================= SCHEDULE AREA ================= -->
+        <!-- Alt kısım büyür, içerik artarsa scroll burada olur -->
+        <ScrollPane fitToWidth="true"
+                    fitToHeight="true"
+                    VBox.vgrow="ALWAYS"
+                    prefHeight="400">
 
-        <!-- SCHEDULE TABLE -->
-        <ScrollPane fitToWidth="true" fitToHeight="true">
-              <GridPane fx:id="scheduleGrid"
-                        hgap="6" vgap="6"
-                        styleClass="schedule-table"/>
-       </ScrollPane>
+            <GridPane fx:id="scheduleGrid"
+                      hgap="6"
+                      vgap="6"
+                      styleClass="schedule-table"
+                      maxWidth="Infinity"
+                      maxHeight="Infinity"/>
+        </ScrollPane>
 
     </VBox>
 
