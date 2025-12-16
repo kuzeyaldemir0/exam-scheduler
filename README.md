@@ -14,6 +14,8 @@ A desktop application for generating conflict-free exam timetables with automati
 - **Classroom Assignment**: Automatic bin-packing by capacity
 - **Room Splitting**: Large courses split across multiple classrooms
 - **Calendar View**: Visual grid showing scheduled exams
+- **User Configuration**: Date range selection, max exams per day
+- **Comprehensive Testing**: Stress tests up to 10,000 students, 500 courses
 
 ### Pending
 - Student schedule view (filter by student ID)
@@ -72,6 +74,54 @@ examschd/app/src/main/java/examschd/
 
 **Time Complexity**: O(courses × days × slots × students)
 
+### Partial Scheduling & Success Rates
+
+If the algorithm cannot schedule all courses due to constraints:
+- **Continues scheduling** remaining courses (doesn't fail entirely)
+- **Returns partial schedule** with maximum courses that fit
+- **Logs warnings** for unscheduled courses to console: `WARNING: Could not schedule [CourseName]`
+- **User sees** what was successfully scheduled in calendar view
+
+#### Expected Success Rates
+
+| Scenario | Success Rate | Conditions |
+|----------|-------------|------------|
+| **Ideal** | **100%** | Small courses (30), ample time (14+ days), sufficient rooms |
+| **Normal University** | **80-84%** | 50-100 courses, 14+ days, moderate conflicts |
+| **Dense Conflicts** | **70%** | Many students share most courses |
+| **Limited Time** | **57%** | Too many courses for available exam days |
+| **Large Scale** | **56%** | 500+ courses, 10,000+ students |
+
+#### Common Reasons for Failed Scheduling
+
+1. **Insufficient time slots** → Too many courses for available exam days
+2. **Dense student conflicts** → Many students enrolled in same courses
+3. **Insufficient classroom capacity** → Not enough large rooms for big courses
+4. **Tight constraints** → Max 2 exams/day + no back-to-back = limited options
+
+#### Solutions When Courses Can't Be Scheduled
+
+**Recommended actions (in order):**
+
+1. **Extend exam period** → Add more days (14-21 days recommended)
+   - Each additional day = 6 more time slots
+   - Most effective for improving success rate
+
+2. **Add more classrooms** or use larger rooms
+   - Enables parallel scheduling of non-conflicting courses
+   - Helps with capacity constraints
+
+3. **Relax constraints** (if policy permits)
+   - Increase max exams per day (2 → 3)
+   - Allow back-to-back exams for specific cases
+
+4. **Review course conflicts**
+   - Identify courses with heavy student overlap
+   - Consider splitting sections or alternative scheduling
+
+**Viewing Failed Courses:**
+Check console output for `WARNING: Could not schedule [CourseName]` messages after clicking "Generate Schedule".
+
 ## CSV Format
 
 **students.csv**
@@ -116,26 +166,117 @@ cd examschd
 
 ## Testing
 
+### Run All Tests
+
 ```bash
+cd examschd
 ./gradlew test
 ```
 
-Tests verify:
-- CSV data scheduling
+### Run Specific Test Suites
+
+```bash
+# Run only SchedulerTest
+./gradlew test --tests "examschd.service.SchedulerTest"
+
+# Run only CSV reader tests
+./gradlew test --tests "examschd.service.readers.*"
+
+# Run a specific test method
+./gradlew test --tests "examschd.service.SchedulerTest.testMediumScaleScheduling"
+```
+
+### View Test Results
+
+After running tests, open the HTML report:
+
+```bash
+# macOS
+open app/build/reports/tests/test/index.html
+
+# Linux
+xdg-open app/build/reports/tests/test/index.html
+
+# Windows
+start app/build/reports/tests/test/index.html
+```
+
+Or view the report at: `examschd/app/build/reports/tests/test/index.html`
+
+### Test Coverage
+
+**Basic Functional Tests:**
+- CSV data scheduling (20 courses)
 - Classroom splitting (100 students → multiple 30-capacity rooms)
-- Student conflict detection
-- Classroom reuse across slots
+- Student conflict detection (overlapping enrollments)
+- Classroom reuse across time slots
 - Insufficient capacity handling
 
-## Configuration (ExamConfig)
+**Comprehensive Stress Tests:**
+- **Medium scale**: 1,000 students, 50 courses, varied classrooms (~25ms)
+- **Large scale**: 10,000 students, 500 courses (~730ms)
+- **Dense conflicts**: 500 students sharing most courses
+- **Varied capacities**: 10-500 students per course
+- **Limited time slots**: Scheduling with constrained availability
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| maxExamsPerDay | 2 | Max exams per student per day |
-| slotsPerDay | 6 | Time slots available each day |
-| breakTimeBetweenExams | 30 | Minutes between exams (unused) |
-| allowedExamDays | User-set | Which dates are exam days |
-| courseDurations | 120 min | Per-course exam duration |
+### Performance Benchmarks
+
+| Scale | Students | Courses | Classrooms | Time |
+|-------|----------|---------|------------|------|
+| Small | 100 | 20 | 10 | <5ms |
+| Medium | 1,000 | 50 | 20 | ~25ms |
+| Large | 10,000 | 500 | 50 | ~730ms |
+
+**All tests verify:**
+- No student has conflicting exams (same time slot)
+- Max exams per day constraint respected
+- No back-to-back exams for any student
+- Classroom capacity constraints honored
+- Multiple classrooms used (not just Classroom_01)
+
+### Test Data Generation
+
+Tests use `TestDataGenerator` utility for programmatic data generation:
+
+```java
+examschd.util.TestDataGenerator.builder()
+    .studentCount(1000)
+    .courseCount(50)
+    .classroomCount(20)
+    .avgStudentsPerCourse(30, 15)  // mean=30, stddev=15
+    .avgCoursesPerStudent(5, 2)    // mean=5, stddev=2
+    .classroomCapacities(20, 30, 40, 50, 100)
+    .seed(42)  // reproducible results
+    .build()
+    .generate();
+```
+
+This allows flexible, reproducible testing without large CSV files.
+
+## Configuration
+
+### User Workflow
+
+1. **Import Data**: Upload CSV files (students, courses, classrooms, enrollments)
+2. **Set Date Range**: Select start and end dates using date pickers
+3. **Apply Date Range**: Click "Apply Date Range" to confirm exam period
+4. **Generate Schedule**: Click "Generate Schedule" to run algorithm
+5. **View Results**: Exam schedule appears in calendar grid
+
+### Configuration Settings (ExamConfig)
+
+| Setting | Default | Set By | Description |
+|---------|---------|--------|-------------|
+| **Start Date** | User-set | Date picker | First day of exam period |
+| **End Date** | User-set | Date picker | Last day of exam period |
+| **maxExamsPerDay** | 2 | Filter settings | Max exams per student per day |
+| **slotsPerDay** | 6 | Hardcoded | Time slots available each day |
+| **courseDurations** | 120 min | Config/Default | Per-course exam duration |
+
+The scheduler uses these settings to:
+- Determine available time slots (dates × slots per day)
+- Enforce max exams per day constraint
+- Allocate appropriate exam durations
 
 ## Key Decisions
 
