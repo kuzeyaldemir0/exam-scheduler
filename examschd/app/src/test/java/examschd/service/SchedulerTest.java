@@ -49,16 +49,13 @@ class SchedulerTest {
         ExamConfig config = new ExamConfig();
         config.setMaxExamsPerDay(2);
 
-        Map<LocalDate, Boolean> allowedDays = new LinkedHashMap<>();
+        // Date range for scheduling
         LocalDate start = LocalDate.now();
-        for (int i = 0; i < 14; i++) {
-            allowedDays.put(start.plusDays(i), true);
-        }
-        config.setAllowedExamDays(allowedDays);
+        LocalDate end = start.plusDays(13);
 
         // Run scheduler
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
-            students, courses, classrooms, enrollments, config
+            students, courses, classrooms, enrollments, config, start, end
         );
 
         // Verify all courses scheduled
@@ -102,13 +99,14 @@ class SchedulerTest {
         // Config
         ExamConfig config = new ExamConfig();
         config.setMaxExamsPerDay(2);
-        Map<LocalDate, Boolean> allowedDays = new LinkedHashMap<>();
-        allowedDays.put(LocalDate.now(), true);
-        config.setAllowedExamDays(allowedDays);
+
+        // Date range for scheduling
+        LocalDate start = LocalDate.now();
+        LocalDate end = start;
 
         // Run scheduler
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
-            students, courses, classrooms, enrollments, config
+            students, courses, classrooms, enrollments, config, start, end
         );
 
         // Verify course was scheduled
@@ -159,12 +157,13 @@ class SchedulerTest {
 
         ExamConfig config = new ExamConfig();
         config.setMaxExamsPerDay(2);
-        Map<LocalDate, Boolean> allowedDays = new LinkedHashMap<>();
-        allowedDays.put(LocalDate.now(), true);
-        config.setAllowedExamDays(allowedDays);
+
+        // Date range for scheduling
+        LocalDate start = LocalDate.now();
+        LocalDate end = start;
 
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
-            students, courses, classrooms, enrollments, config
+            students, courses, classrooms, enrollments, config, start, end
         );
 
         // Both should be scheduled
@@ -201,12 +200,13 @@ class SchedulerTest {
 
         ExamConfig config = new ExamConfig();
         config.setMaxExamsPerDay(3);
-        Map<LocalDate, Boolean> allowedDays = new LinkedHashMap<>();
-        allowedDays.put(LocalDate.now(), true);
-        config.setAllowedExamDays(allowedDays);
+
+        // Date range for scheduling
+        LocalDate start = LocalDate.now();
+        LocalDate end = start;
 
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
-            allStudents, courses, classrooms, enrollments, config
+            allStudents, courses, classrooms, enrollments, config, start, end
         );
 
         // All 3 courses should be scheduled (same room, different slots)
@@ -242,12 +242,13 @@ class SchedulerTest {
 
         ExamConfig config = new ExamConfig();
         config.setMaxExamsPerDay(2);
-        Map<LocalDate, Boolean> allowedDays = new LinkedHashMap<>();
-        allowedDays.put(LocalDate.now(), true);
-        config.setAllowedExamDays(allowedDays);
+
+        // Date range for scheduling
+        LocalDate start = LocalDate.now();
+        LocalDate end = start;
 
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
-            students, List.of(course), classrooms, enrollments, config
+            students, List.of(course), classrooms, enrollments, config, start, end
         );
 
         // Course cannot be scheduled
