@@ -40,4 +40,17 @@ public class Classroom {
         this.capacity = capacity;
 
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Classroom classroom = (Classroom) o;
+        return classroomId == classroom.classroomId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(classroomId);
+    }
 }
