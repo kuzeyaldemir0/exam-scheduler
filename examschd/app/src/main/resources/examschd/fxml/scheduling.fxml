@@ -15,11 +15,9 @@
           AnchorPane.rightAnchor="20"
           AnchorPane.bottomAnchor="20">
 
-        <!-- ================= TITLE ================= -->
         <Label text="Exam Scheduler — Dashboard"
                styleClass="title"/>
 
-        <!-- ================= FILTER + IMPORT ================= -->
         <HBox spacing="15" alignment="CENTER">
             <Button fx:id="openFiltersBtn"
                     text="Filter Settings"
@@ -36,10 +34,8 @@
                     styleClass="blue-button"/>
         </HBox>
 
-        <!-- ================= SEARCH CARDS (YAN YANA) ================= -->
         <HBox spacing="40" alignment="CENTER">
 
-            <!-- STUDENT CARD -->
             <VBox spacing="12" styleClass="card">
 
                 <Label text="Student Schedule" styleClass="card-title"/>
@@ -58,7 +54,6 @@
                         styleClass="action-btn"/>
             </VBox>
 
-            <!-- DATE RANGE CARD -->
             <VBox spacing="12" styleClass="card">
 
                 <Label text="Exam Date Range" styleClass="card-title"/>
@@ -74,9 +69,10 @@
                 </HBox>
 
                 <Button fx:id="applyDateRangeBtn"
-                        text="Apply Date Range"
-                        prefWidth="240"
-                        styleClass="action-btn"/>
+        text="Apply Date Range"
+        prefWidth="240"
+        styleClass="action-btn"
+        onAction="#applyDateRange"/>
             </VBox>
 
             <!-- CLASSROOM CARD -->
@@ -100,19 +96,22 @@
 
         </HBox>
 
-        <!-- ================= SCHEDULE AREA ================= -->
-        <!-- Alt kısım büyür, içerik artarsa scroll burada olur -->
-        <ScrollPane fitToWidth="true"
+        <ScrollPane fx:id="scheduleScroll"
+                    fitToWidth="false"
                     fitToHeight="true"
+                    hbarPolicy="AS_NEEDED"
+                    vbarPolicy="NEVER"
+                    pannable="true"
                     VBox.vgrow="ALWAYS"
                     prefHeight="400">
 
-            <GridPane fx:id="scheduleGrid"
-                      hgap="6"
-                      vgap="6"
-                      styleClass="schedule-table"
-                      maxWidth="Infinity"
-                      maxHeight="Infinity"/>
+            <content>
+                <GridPane fx:id="scheduleGrid"
+                          hgap="12"
+                          vgap="6"
+                          styleClass="schedule-table"/>
+            </content>
+
         </ScrollPane>
 
     </VBox>

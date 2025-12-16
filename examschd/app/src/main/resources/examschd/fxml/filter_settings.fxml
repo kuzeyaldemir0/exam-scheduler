@@ -7,7 +7,7 @@
 <AnchorPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="examschd.controller.FilterSettingsController"
             stylesheets="@../../css/filter_settings.css"
-            prefWidth="650" prefHeight="550">
+            prefWidth="650" prefHeight="420">
 
     <VBox alignment="TOP_CENTER"
           spacing="25"
@@ -22,21 +22,10 @@
         <VBox spacing="10" prefWidth="580">
             <Label text="Course Durations" styleClass="section-title"/>
 
-            <ScrollPane prefHeight="180" prefWidth="580"
+            <ScrollPane prefHeight="180"
                         fitToWidth="true"
                         styleClass="card">
                 <VBox fx:id="courseDurationList" spacing="12"/>
-            </ScrollPane>
-        </VBox>
-
-        <!-- EXAM DAYS SECTION -->
-        <VBox spacing="10" prefWidth="580">
-            <Label text="Exam Days" styleClass="section-title"/>
-
-            <ScrollPane prefHeight="180" prefWidth="580"
-                        fitToWidth="true"
-                        styleClass="card">
-                <VBox fx:id="examDaysList" spacing="12"/>
             </ScrollPane>
         </VBox>
 
@@ -54,12 +43,10 @@
 
         <!-- BUTTONS -->
         <HBox alignment="CENTER_RIGHT" spacing="20">
-            <Button fx:id="cancelBtn"
-                    text="Cancel"
+            <Button text="Cancel"
                     onAction="#closePopup"/>
 
-            <Button fx:id="saveBtn"
-                    text="Save"
+            <Button text="Save"
                     onAction="#saveSettings"/>
         </HBox>
 

@@ -6,7 +6,6 @@ import java.util.Map;
 
 public class ExamConfig {
 
-    private Map<LocalDate, Boolean> allowedExamDays = new LinkedHashMap<>();
     private int maxExamsPerDay = 2;
     private int breakTimeBetweenExams = 30;
 
@@ -21,15 +20,11 @@ public class ExamConfig {
                       int breakTimeBetweenExams,
                       Map<String, Integer> courseDurations) {
 
-        this.allowedExamDays = allowedExamDays;
         this.maxExamsPerDay = maxExamsPerDay;
         this.breakTimeBetweenExams = breakTimeBetweenExams;
         this.courseDurations = courseDurations;
     }
 
-    public Map<LocalDate, Boolean> getAllowedExamDays() {
-        return allowedExamDays;
-    }
 
     public int getMaxExamsPerDay() {
         return maxExamsPerDay;
@@ -41,10 +36,6 @@ public class ExamConfig {
 
     public Map<String, Integer> getCourseDurations() {
         return courseDurations;
-    }
-
-    public void setAllowedExamDays(Map<LocalDate, Boolean> allowedExamDays) {
-        this.allowedExamDays = allowedExamDays;
     }
 
     public void setMaxExamsPerDay(int maxExamsPerDay) {
@@ -62,7 +53,6 @@ public class ExamConfig {
     @Override
     public String toString() {
         return "ExamConfig{" +
-                "allowedDays=" + allowedExamDays +
                 ", maxExamsPerDay=" + maxExamsPerDay +
                 ", breakTimeBetweenExams=" + breakTimeBetweenExams +
                 ", courseDurations=" + courseDurations +

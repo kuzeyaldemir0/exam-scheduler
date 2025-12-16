@@ -1,30 +1,23 @@
 package examschd.controller;
 
-import examschd.model.Classroom;
-import examschd.model.Course;
-import examschd.model.Enrollment;
-import examschd.model.ExamSession;
-import examschd.model.Student;
-import examschd.model.ExamConfig;
-
+import examschd.model.*;
 import examschd.service.ImportService;
 import examschd.service.Scheduler;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
@@ -33,13 +26,10 @@ public class SchedulingController {
 
     @FXML private DatePicker startDatePicker;
     @FXML private DatePicker endDatePicker;
-    @FXML private AnchorPane rootPane;
     @FXML private GridPane scheduleGrid;
 
     @FXML private Button openFiltersBtn;
     @FXML private Button applyDateRangeBtn;
-    @FXML private Button importBtn;
-    @FXML private Button generateBtn;
 
     @FXML private TextField studentSearchField;
     @FXML private ComboBox<Integer> studentCombo;
@@ -48,32 +38,208 @@ public class SchedulingController {
     @FXML private TextField classroomSearchField;
     @FXML private ComboBox<String> classroomCombo;
     @FXML private Button showClassroomBtn;
+    @FXML private Button generateBtn;
 
-    private List<Classroom> allClassrooms;
-    private List<Enrollment> allEnrollments;
-    private List<Student> allStudentsList;
-    private List<Course> allCourses;
+
+    private List<Classroom> allClassrooms = new ArrayList<>();
+    private List<Enrollment> allEnrollments = new ArrayList<>();
+    private List<Student> allStudentsList = new ArrayList<>();
+    private List<Course> allCourses = new ArrayList<>();
 
     private ObservableList<Integer> studentIds = FXCollections.observableArrayList();
     private ObservableList<String> classroomNames = FXCollections.observableArrayList();
 
-    private Map<LocalDate, VBox> dayColumnMap = new HashMap<>();
+    private Map<LocalDate, VBox> dayColumnMap = new LinkedHashMap<>();
+    private Map<LocalDate, List<ExamSession>> preparedSchedule;
 
-    private ExamConfig userConfig = new ExamConfig();  
+    private ExamConfig userConfig = new ExamConfig();
+    private final BooleanProperty dateRangeApplied = new SimpleBooleanProperty(false);
 
     private final ImportService importService = new ImportService();
     private final Scheduler scheduler = new Scheduler();
+
+
 
     @FXML
     public void initialize() {
         setupListeners();
         loadExistingDataOnStartup();
+
+        // 🔒 Generate, Apply basılmadan aktif olmasın
+        generateBtn.disableProperty().bind(
+            startDatePicker.valueProperty().isNull()
+                .or(endDatePicker.valueProperty().isNull())
+                .or(dateRangeApplied.not())
+        );
     }
+
 
     private void loadExistingDataOnStartup() {
         try {
-            // DB'deki mevcut verileri yükle
             importService.loadExistingData();
+
+            allStudentsList = importService.getAllStudents();
+            allCourses = importService.getAllCourses();
+            allClassrooms = importService.getAllClassrooms();
+            allEnrollments = importService.getAllEnrollments();
+
+            studentIds.clear();
+            classroomNames.clear();
+
+            for (Student s : allStudentsList) studentIds.add(s.getId());
+            for (Classroom c : allClassrooms) classroomNames.add(c.getName());
+
+            studentCombo.setItems(studentIds);
+            classroomCombo.setItems(classroomNames);
+
+            setupSearchFilters();
+            initDefaultConfig();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initDefaultConfig() {
+        Map<String, Integer> dur = new LinkedHashMap<>();
+        for (Course c : allCourses)
+            dur.put(c.getCourseName(), c.getDurationMinutes());
+
+        userConfig.setCourseDurations(dur);
+        userConfig.setMaxExamsPerDay(2);
+        userConfig.setBreakTimeBetweenExams(30);
+    }
+
+    private void renderEmptySchedule(LocalDate start, LocalDate end) {
+
+        scheduleGrid.getChildren().clear();
+        scheduleGrid.getColumnConstraints().clear();
+        scheduleGrid.getRowConstraints().clear();
+        dayColumnMap.clear();
+
+        RowConstraints row = new RowConstraints();
+        row.setVgrow(Priority.ALWAYS);
+        scheduleGrid.getRowConstraints().add(row);
+
+        LocalDate d = start;
+        int col = 0;
+
+        while (!d.isAfter(end)) {
+
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setMinWidth(220);
+            cc.setHgrow(Priority.ALWAYS);
+            scheduleGrid.getColumnConstraints().add(cc);
+
+            VBox dayBox = new VBox(8);
+            dayBox.setFillWidth(true);
+            VBox.setVgrow(dayBox, Priority.ALWAYS);
+
+            dayBox.setStyle(
+                "-fx-background-color:#F8F8F8;" +
+                "-fx-padding:10;" +
+                "-fx-background-radius:8;"
+            );
+
+            Label header = new Label(d.toString());
+            header.setStyle("-fx-font-weight:bold; -fx-font-size:14;");
+
+            dayBox.getChildren().add(header);
+
+            scheduleGrid.add(dayBox, col++, 0);
+            dayColumnMap.put(d, dayBox);
+
+            d = d.plusDays(1);
+        }
+    }
+
+
+    private void clearRenderedSchedule() {
+        for (VBox box : dayColumnMap.values()) {
+            if (box.getChildren().size() > 1) {
+                box.getChildren().remove(1, box.getChildren().size());
+            }
+        }
+    }
+
+        private void renderSchedule(Map<LocalDate, List<ExamSession>> schedule) {
+
+        if (dayColumnMap.isEmpty()) {
+            LocalDate s = startDatePicker.getValue();
+            LocalDate e = endDatePicker.getValue();
+            if (s != null && e != null) {
+                renderEmptySchedule(s, e);
+            }
+        }
+
+        clearRenderedSchedule();
+
+        for (Map.Entry<LocalDate, List<ExamSession>> entry : schedule.entrySet()) {
+
+            VBox dayBox = dayColumnMap.get(entry.getKey());
+            if (dayBox == null) continue;
+
+            List<ExamSession> sessions = entry.getValue();
+
+            sessions.sort(Comparator.comparing(ExamSession::getTimeSlot));
+
+            for (ExamSession session : sessions) {
+
+                String courseName = session.getCourse().getCourseName();
+                String time = session.getTimeSlot();
+                int studentCount = session.getCourse().getStudents().size();
+
+                Set<String> rooms = new LinkedHashSet<>();
+                for (ExamPartition p : session.getPartitions()) {
+                    if (p.getClassroom() != null) {
+                        rooms.add(p.getClassroom().getName());
+                    }
+                }
+
+                String text =
+                    courseName + "\n" +
+                    "⏰ " + time + "\n" +
+                    "🏫 " + (rooms.isEmpty() ? "N/A" : String.join(", ", rooms));
+
+                Label examLabel = new Label(text);
+                examLabel.setWrapText(true);
+                examLabel.setMaxWidth(Double.MAX_VALUE);
+
+                examLabel.setStyle(
+                    "-fx-background-color:#E3F2FD;" +
+                    "-fx-padding:10;" +
+                    "-fx-background-radius:6;" +
+                    "-fx-font-size:12;"
+                );
+
+                Tooltip.install(
+                    examLabel,
+                    new Tooltip(
+                        "Students: " + studentCount +
+                        "\nDuration: " + session.getCourse().getDurationMinutes() + " min"
+                    )
+                );
+
+                dayBox.getChildren().add(examLabel);
+            }
+        }
+    }
+
+
+    public void initData(
+            File classroomsFile,
+            File coursesFile,
+            File enrollmentsFile,
+            File studentsFile
+    ) {
+
+        try {
+            importService.loadExistingData();
+
+            importService.importStudents(studentsFile.getAbsolutePath());
+            importService.importCourses(coursesFile.getAbsolutePath());
+            importService.importClassrooms(classroomsFile.getAbsolutePath());
+            importService.importEnrollments(enrollmentsFile.getAbsolutePath());
 
             allStudentsList = importService.getAllStudents();
             allCourses = importService.getAllCourses();
@@ -85,15 +251,16 @@ public class SchedulingController {
             if (allClassrooms == null) allClassrooms = new ArrayList<>();
             if (allEnrollments == null) allEnrollments = new ArrayList<>();
 
-            // ComboBox verileri
             studentIds.clear();
             classroomNames.clear();
 
-            for (Student s : allStudentsList)
+            for (Student s : allStudentsList) {
                 studentIds.add(s.getId());
+            }
 
-            for (Classroom c : allClassrooms)
+            for (Classroom c : allClassrooms) {
                 classroomNames.add(c.getName());
+            }
 
             studentCombo.setItems(studentIds);
             classroomCombo.setItems(classroomNames);
@@ -101,10 +268,9 @@ public class SchedulingController {
             setupSearchFilters();
             initDefaultConfig();
 
-            System.out.println("Existing data loaded on startup.");
+            System.out.println("Data imported and UI refreshed.");
 
-        } catch (SQLException e) {
-            System.err.println("Failed to load existing data on startup.");
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -113,11 +279,10 @@ public class SchedulingController {
     private void openImportPopup() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/examschd/fxml/file_select.fxml")
+                getClass().getResource("/examschd/fxml/file_select.fxml")
             );
 
             Parent root = loader.load();
-
             FileSelectController ctrl = loader.getController();
 
             Stage popup = new Stage();
@@ -143,151 +308,121 @@ public class SchedulingController {
     }
 
 
-    public void initData(File classroomsFile,
-                     File coursesFile,
-                     File enrollmentsFile,
-                     File studentsFile)   throws IOException, SQLException {
-
-        try {
-            // Mevcut verileri yükle
-            importService.loadExistingData();
-
-            System.out.println("Importing data from CSV files if needed...");
-            importService.importStudents(studentsFile.getAbsolutePath());
-            importService.importCourses(coursesFile.getAbsolutePath());
-            importService.importClassrooms(classroomsFile.getAbsolutePath());
-            importService.importEnrollments(enrollmentsFile.getAbsolutePath());
-
-            // DB’den güncel verileri al
-            allStudentsList = importService.getAllStudents();
-            allCourses = importService.getAllCourses();
-            allClassrooms = importService.getAllClassrooms();
-            allEnrollments = importService.getAllEnrollments();
-
-            if (allStudentsList == null) allStudentsList = new ArrayList<>();
-            if (allCourses == null) allCourses = new ArrayList<>();
-            if (allClassrooms == null) allClassrooms = new ArrayList<>();
-            if (allEnrollments == null) allEnrollments = new ArrayList<>();
-
-        } catch (SQLException e) {
-            System.err.println("Database error while loading data");
-            e.printStackTrace();
-        } catch (Exception e) {
-            System.err.println("Import error");
-            e.printStackTrace();
-        }
-        
-        studentIds.clear();
-        classroomNames.clear();
-
-        for (Student s : allStudentsList) studentIds.add(s.getId());
-        for (Classroom c : allClassrooms) classroomNames.add(c.getName());
-
-        studentCombo.setItems(studentIds);
-        classroomCombo.setItems(classroomNames);
-
-        setupSearchFilters();
-        initDefaultConfig();
-    }
-
-    private void initDefaultConfig() {
-
-        Map<String, Integer> dur = new LinkedHashMap<>();
-        for (Course c : allCourses)
-            dur.put(c.getCourseName(), c.getDurationMinutes());
-
-        userConfig.setCourseDurations(dur);
-
-        userConfig.setMaxExamsPerDay(2);
-        userConfig.setBreakTimeBetweenExams(30);
-
-    }
-
-    private void renderEmptySchedule(LocalDate start, LocalDate end) {
-
-        scheduleGrid.getChildren().clear();
-        scheduleGrid.getColumnConstraints().clear();
-        scheduleGrid.getRowConstraints().clear();
-        dayColumnMap.clear();
-
-        RowConstraints row = new RowConstraints();
-        row.setVgrow(Priority.ALWAYS);
-        scheduleGrid.getRowConstraints().add(row);
-
-        LocalDate d = start;
-        int colIndex = 0;
-
-        while (!d.isAfter(end)) {
-
-            ColumnConstraints cc = new ColumnConstraints();
-            cc.setHgrow(Priority.ALWAYS);
-            scheduleGrid.getColumnConstraints().add(cc);
-
-            VBox dayBox = new VBox(8);
-            dayBox.setFillWidth(true);
-
-            Label header = new Label(d.toString());
-            header.setStyle("-fx-font-weight: bold; -fx-font-size: 14;");
-
-            boolean allowed = userConfig.getAllowedExamDays().getOrDefault(d, true);
-
-            if (allowed) {
-                dayBox.setStyle("-fx-background-color: #F8F8F8; -fx-padding: 10; -fx-background-radius: 8;");
-            } else {
-                dayBox.setStyle("-fx-background-color: #FFE5E5; -fx-padding: 10; -fx-background-radius: 8;");
-            }
-
-            dayBox.getChildren().add(header);
-
-            scheduleGrid.add(dayBox, colIndex, 0);
-            dayColumnMap.put(d, dayBox);
-
-            d = d.plusDays(1);
-            colIndex++;
-        }
-    }
-
-    private void setupSearchFilters() {
-
-        studentSearchField.textProperty().addListener((obs, old, val) -> {
-            String q = val.trim();
-            if (q.isEmpty() || !q.matches("\\d+")) {
-                studentCombo.setItems(studentIds);
-            } else {
-                studentCombo.setItems(studentIds.filtered(id -> (id + "").contains(q)));
-            }
-        });
-
-        classroomSearchField.textProperty().addListener((obs, old, val) -> {
-            String q = val.toLowerCase();
-            classroomCombo.setItems(
-                    classroomNames.filtered(name -> name.toLowerCase().contains(q))
-            );
-        });
-    }
-
     private void setupListeners() {
 
         showStudentBtn.setOnAction(e -> {
-            Integer studentId = studentCombo.getValue();
-            if (studentId == null) return;
-            System.out.println("Loading schedule for student: " + studentId);
+            if (preparedSchedule == null) return;
+
+            Integer id = studentCombo.getValue();
+            if (id == null) return;
+
+            Map<LocalDate, List<ExamSession>> filtered = new LinkedHashMap<>();
+
+            for (var entry : preparedSchedule.entrySet()) {
+                List<ExamSession> list = new ArrayList<>();
+                for (ExamSession s : entry.getValue()) {
+                    boolean ok = s.getCourse().getStudents()
+                                  .stream()
+                                  .anyMatch(st -> st.getId() == id);
+                    if (ok) list.add(s);
+                }
+                filtered.put(entry.getKey(), list);
+            }
+
+            renderSchedule(filtered);
         });
 
         showClassroomBtn.setOnAction(e -> {
+            if (preparedSchedule == null) return;
+
             String room = classroomCombo.getValue();
             if (room == null) return;
-            System.out.println("Loading schedule for classroom: " + room);
+
+            Map<LocalDate, List<ExamSession>> filtered = new LinkedHashMap<>();
+
+            for (var entry : preparedSchedule.entrySet()) {
+                List<ExamSession> list = new ArrayList<>();
+                for (ExamSession s : entry.getValue()) {
+                    boolean ok = s.getPartitions().stream()
+                                  .anyMatch(p ->
+                                      p.getClassroom() != null &&
+                                      p.getClassroom().getName().equals(room)
+                                  );
+                    if (ok) list.add(s);
+                }
+                filtered.put(entry.getKey(), list);
+            }
+
+            renderSchedule(filtered);
+        }); 
+
+        startDatePicker.valueProperty().addListener((obs, oldV, newV) -> {
+            dateRangeApplied.set(false);
+        });
+
+        endDatePicker.valueProperty().addListener((obs, oldV, newV) -> {
+            dateRangeApplied.set(false);
         });
 
         openFiltersBtn.setOnAction(e -> openFiltersPopup());
-
         applyDateRangeBtn.setOnAction(e -> applyDateRange());
+    }
+
+
+    private void setupSearchFilters() {
+
+        studentSearchField.textProperty().addListener((o,a,b) ->
+            studentCombo.setItems(
+                studentIds.filtered(id -> b.isEmpty() || id.toString().contains(b))
+            )
+        );
+
+        classroomSearchField.textProperty().addListener((o,a,b) ->
+            classroomCombo.setItems(
+                classroomNames.filtered(n -> n.toLowerCase().contains(b.toLowerCase()))
+            )
+        );
+    }
+
+    @FXML
+    private void applyDateRange() {
+
+        LocalDate start = startDatePicker.getValue();
+        LocalDate end = endDatePicker.getValue();
+
+        if (start == null || end == null || end.isBefore(start)) {
+            return;
+        }
+
+        renderEmptySchedule(start, end);
+        dateRangeApplied.set(true);
+    }
+
+
+    @FXML
+    private void onGenerateSchedule() {
+        if (!dateRangeApplied.get()) {
+            System.out.println("Please click Apply Date Range first.");
+            return;
+        }
+
+        preparedSchedule = scheduler.generateSchedule(
+            allStudentsList,
+            allCourses,
+            allClassrooms,
+            allEnrollments,
+            userConfig,
+            startDatePicker.getValue(),
+            endDatePicker.getValue()
+        );
+
+        renderSchedule(preparedSchedule);
     }
 
     private void openFiltersPopup() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/examschd/fxml/filter_settings.fxml"));
+            FXMLLoader loader =
+                new FXMLLoader(getClass().getResource("/examschd/fxml/filter_settings.fxml"));
             Parent root = loader.load();
 
             FilterSettingsController ctrl = loader.getController();
@@ -295,15 +430,11 @@ public class SchedulingController {
             ctrl.loadSavedDurations(allCourses);
 
             ctrl.loadExtraSettings(
-                    userConfig.getMaxExamsPerDay(),
-                    userConfig.getBreakTimeBetweenExams()
+                userConfig.getMaxExamsPerDay(),
+                userConfig.getBreakTimeBetweenExams()
             );
 
-            if (startDatePicker.getValue() != null && endDatePicker.getValue() != null)
-                ctrl.setExamDateRange(startDatePicker.getValue(), endDatePicker.getValue());
-
-            if (!userConfig.getAllowedExamDays().isEmpty())
-                ctrl.loadSavedExamDays(userConfig.getAllowedExamDays());
+            
 
             Stage popup = new Stage();
             popup.initModality(Modality.APPLICATION_MODAL);
@@ -312,98 +443,19 @@ public class SchedulingController {
             popup.showAndWait();
 
             userConfig = ctrl.buildConfig();
+            preparedSchedule = null;
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    private void applyDateRange() {
-        LocalDate start = startDatePicker.getValue();
-        LocalDate end = endDatePicker.getValue();
-
-        if (start == null || end == null || end.isBefore(start)) {
-            System.out.println("Invalid date range.");
-            return;
-        }
-
-        if (userConfig.getAllowedExamDays().isEmpty()) {
-            Map<LocalDate, Boolean> tmp = new LinkedHashMap<>();
-            LocalDate d = start;
-            while (!d.isAfter(end)) {
-                tmp.put(d, true);
-                d = d.plusDays(1);
+            if (startDatePicker.getValue() != null && endDatePicker.getValue() != null) {
+                renderEmptySchedule(
+                    startDatePicker.getValue(),
+                    endDatePicker.getValue()
+                );
             }
-            userConfig.setAllowedExamDays(tmp);
-        }
 
-        renderEmptySchedule(start, end);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    @FXML
-    private void onGenerateSchedule() {
-        // Validate we have data
-        if (allCourses == null || allCourses.isEmpty()) {
-            System.out.println("No courses loaded. Please import data first.");
-            return;
-        }
 
-        if (userConfig.getAllowedExamDays().isEmpty()) {
-            System.out.println("No exam days configured. Please set date range first.");
-            return;
-        }
-
-        System.out.println("Generating schedule with " + allCourses.size() + " courses...");
-
-        // Call the scheduler
-        Map<LocalDate, List<ExamSession>> schedule = scheduler.generateSchedule(
-            allStudentsList,
-            allCourses,
-            allClassrooms,
-            allEnrollments,
-            userConfig
-        );
-
-        // Render results
-        renderSchedule(schedule);
-    }
-
-    private void renderSchedule(Map<LocalDate, List<ExamSession>> schedule) {
-        // First render the empty grid if not already done
-        if (dayColumnMap.isEmpty()) {
-            LocalDate start = startDatePicker.getValue();
-            LocalDate end = endDatePicker.getValue();
-            if (start != null && end != null) {
-                renderEmptySchedule(start, end);
-            }
-        }
-
-        // Add exam sessions to the grid
-        for (Map.Entry<LocalDate, List<ExamSession>> entry : schedule.entrySet()) {
-            LocalDate day = entry.getKey();
-            List<ExamSession> sessions = entry.getValue();
-
-            VBox dayBox = dayColumnMap.get(day);
-            if (dayBox == null) continue;
-
-            for (ExamSession session : sessions) {
-                String courseName = session.getCourse().getCourseName();
-                String slotInfo = session.getTimeSlot();
-                int studentCount = session.getCourse().getStudents().size();
-
-                Label examLabel = new Label(courseName + " (" + slotInfo + ")");
-                examLabel.setStyle("-fx-background-color: #E3F2FD; -fx-padding: 8; " +
-                                   "-fx-background-radius: 4; -fx-font-size: 12;");
-                examLabel.setMaxWidth(Double.MAX_VALUE);
-
-                Tooltip tooltip = new Tooltip("Students: " + studentCount +
-                                              "\nDuration: " + session.getCourse().getDurationMinutes() + " min");
-                Tooltip.install(examLabel, tooltip);
-
-                dayBox.getChildren().add(examLabel);
-            }
-        }
-
-        System.out.println("Schedule rendered on grid.");
-    }
 }
