@@ -109,7 +109,7 @@ public class SchedulerSuccessRateTest {
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             data.getStudents(), data.getCourses(), data.getClassrooms(),
             data.getEnrollments(), config, start, end
-        );
+        ).getSchedule();
         long elapsed = System.currentTimeMillis() - startTime;
 
         // Calculate metrics

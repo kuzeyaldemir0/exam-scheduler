@@ -10,6 +10,7 @@ import examschd.model.Enrollment;
 import examschd.model.ExamConfig;
 import examschd.model.ExamPartition;
 import examschd.model.ExamSession;
+import examschd.model.ScheduleResult;
 import examschd.model.Student;
 
 public class Scheduler {
@@ -132,7 +133,7 @@ public class Scheduler {
 
     /* ===================== MAIN ===================== */
 
-    public Map<LocalDate, List<ExamSession>> generateSchedule(
+    public ScheduleResult generateSchedule(
             List<Student> students,
             List<Course> courses,
             List<Classroom> classrooms,
@@ -147,13 +148,14 @@ public class Scheduler {
         applyCourseDurations(courses, config);
 
         List<LocalDate> examDays = buildDateRange(startDate, endDate);
-        if (examDays.isEmpty()) return new LinkedHashMap<>();
+        if (examDays.isEmpty()) return new ScheduleResult(new LinkedHashMap<>(), new ArrayList<>());
 
         int maxExamsPerDay = config.getMaxExamsPerDay();
         int slotsPerDay = 6;
 
         List<Course> sortedCourses = sortByEnrollment(courses);
         List<Classroom> sortedRooms = sortByCapacity(classrooms);
+        List<Course> unscheduledCourses = new ArrayList<>();
 
         Map<LocalDate, List<ExamSession>> result = new LinkedHashMap<>();
         Map<String, List<ExamSession>> slotMap = new HashMap<>();
@@ -244,12 +246,13 @@ public class Scheduler {
             }
 
             if (!placed) {
+                unscheduledCourses.add(course);
                 System.out.println("WARNING: Could not schedule " + course.getCourseName());
             }
         }
 
         System.out.println("=== Schedule Complete ===");
-        return result;
+        return new ScheduleResult(result, unscheduledCourses);
     }
 
     /* ===================== DATA BUILD ===================== */

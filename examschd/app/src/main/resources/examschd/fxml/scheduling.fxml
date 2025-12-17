@@ -114,6 +114,12 @@
 
         </ScrollPane>
 
+        <VBox fx:id="unscheduledSection"
+              spacing="8"
+              style="-fx-padding: 20; -fx-border-color: #ffcdd2; -fx-border-width: 1; -fx-border-radius: 8; -fx-background-color: #ffebee;"
+              VBox.vgrow="NEVER">
+        </VBox>
+
     </VBox>
 
 </AnchorPane>

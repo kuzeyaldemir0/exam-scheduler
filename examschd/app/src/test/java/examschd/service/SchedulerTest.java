@@ -56,7 +56,7 @@ class SchedulerTest {
         // Run scheduler
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             students, courses, classrooms, enrollments, config, start, end
-        );
+        ).getSchedule();
 
         // Verify all courses scheduled
         int totalScheduled = result.values().stream().mapToInt(List::size).sum();
@@ -107,7 +107,7 @@ class SchedulerTest {
         // Run scheduler
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             students, courses, classrooms, enrollments, config, start, end
-        );
+        ).getSchedule();
 
         // Verify course was scheduled
         assertEquals(1, result.values().stream().mapToInt(List::size).sum(),
@@ -164,7 +164,7 @@ class SchedulerTest {
 
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             students, courses, classrooms, enrollments, config, start, end
-        );
+        ).getSchedule();
 
         // Both should be scheduled
         assertEquals(2, result.values().stream().mapToInt(List::size).sum());
@@ -207,7 +207,7 @@ class SchedulerTest {
 
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             allStudents, courses, classrooms, enrollments, config, start, end
-        );
+        ).getSchedule();
 
         // All 3 courses should be scheduled (same room, different slots)
         assertEquals(3, result.values().stream().mapToInt(List::size).sum(),
@@ -249,7 +249,7 @@ class SchedulerTest {
 
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             students, List.of(course), classrooms, enrollments, config, start, end
-        );
+        ).getSchedule();
 
         // Course cannot be scheduled
         assertEquals(0, result.values().stream().mapToInt(List::size).sum(),
@@ -290,7 +290,7 @@ class SchedulerTest {
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             data.getStudents(), data.getCourses(), data.getClassrooms(),
             data.getEnrollments(), config, start, end
-        );
+        ).getSchedule();
 
         long schedTime = System.currentTimeMillis();
         System.out.println("Scheduling time: " + (schedTime - genTime) + "ms");
@@ -355,7 +355,7 @@ class SchedulerTest {
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             data.getStudents(), data.getCourses(), data.getClassrooms(),
             data.getEnrollments(), config, start, end
-        );
+        ).getSchedule();
 
         long schedTime = System.currentTimeMillis();
         System.out.println("Scheduling time: " + (schedTime - genTime) + "ms");
@@ -400,7 +400,7 @@ class SchedulerTest {
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             data.getStudents(), data.getCourses(), data.getClassrooms(),
             data.getEnrollments(), config, start, end
-        );
+        ).getSchedule();
 
         int totalScheduled = result.values().stream().mapToInt(List::size).sum();
         System.out.println("Courses scheduled with dense conflicts: " + totalScheduled + "/" + data.getCourses().size());
@@ -440,7 +440,7 @@ class SchedulerTest {
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             data.getStudents(), data.getCourses(), data.getClassrooms(),
             data.getEnrollments(), config, start, end
-        );
+        ).getSchedule();
 
         int totalScheduled = result.values().stream().mapToInt(List::size).sum();
         System.out.println("Courses scheduled: " + totalScheduled + "/" + data.getCourses().size());
@@ -486,7 +486,7 @@ class SchedulerTest {
         Map<LocalDate, List<ExamSession>> result = scheduler.generateSchedule(
             data.getStudents(), data.getCourses(), data.getClassrooms(),
             data.getEnrollments(), config, start, end
-        );
+        ).getSchedule();
 
         int totalScheduled = result.values().stream().mapToInt(List::size).sum();
         System.out.println("Courses scheduled in limited time: " + totalScheduled + "/" + data.getCourses().size());

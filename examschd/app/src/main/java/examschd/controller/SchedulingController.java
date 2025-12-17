@@ -27,6 +27,7 @@ public class SchedulingController {
     @FXML private DatePicker startDatePicker;
     @FXML private DatePicker endDatePicker;
     @FXML private GridPane scheduleGrid;
+    @FXML private VBox unscheduledSection;
 
     @FXML private Button openFiltersBtn;
     @FXML private Button applyDateRangeBtn;
@@ -50,7 +51,7 @@ public class SchedulingController {
     private ObservableList<String> classroomNames = FXCollections.observableArrayList();
 
     private Map<LocalDate, VBox> dayColumnMap = new LinkedHashMap<>();
-    private Map<LocalDate, List<ExamSession>> preparedSchedule;
+    private ScheduleResult preparedScheduleResult;
 
     private ExamConfig userConfig = new ExamConfig();
     private final BooleanProperty dateRangeApplied = new SimpleBooleanProperty(false);
@@ -225,6 +226,52 @@ public class SchedulingController {
         }
     }
 
+    private void displayUnscheduledCourses(List<Course> unscheduledCourses) {
+        unscheduledSection.getChildren().clear();
+
+        if (unscheduledCourses == null || unscheduledCourses.isEmpty()) {
+            Label success = new Label("All courses scheduled successfully!");
+            success.setStyle(
+                "-fx-text-fill: #2E7D32;" +
+                "-fx-font-size: 14;" +
+                "-fx-font-weight: bold;"
+            );
+            unscheduledSection.getChildren().add(success);
+            return;
+        }
+
+        Label title = new Label("Unscheduled Courses (" + unscheduledCourses.size() + "):");
+        title.setStyle(
+            "-fx-text-fill: #C62828;" +
+            "-fx-font-size: 14;" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 10 0 5 0;"
+        );
+        unscheduledSection.getChildren().add(title);
+
+        TextArea unscheduledList = new TextArea();
+        unscheduledList.setEditable(false);
+        unscheduledList.setWrapText(true);
+        unscheduledList.setPrefRowCount(3);
+        unscheduledList.setMaxHeight(100);
+
+        StringBuilder text = new StringBuilder();
+        for (Course course : unscheduledCourses) {
+            text.append("- ").append(course.getCourseName())
+                .append(" (").append(course.getStudents().size()).append(" students)\n");
+        }
+        unscheduledList.setText(text.toString());
+
+        Tooltip extendTip = new Tooltip(
+            "These courses could not fit in the current schedule.\n\n" +
+            "Try extending the date range to provide more exam slots,\n" +
+            "or reducing the number of exams per day in Filter Settings."
+        );
+        Tooltip.install(unscheduledList, extendTip);
+
+        unscheduledSection.getChildren().add(unscheduledList);
+    }
+
 
     public void initData(
             File classroomsFile,
@@ -311,14 +358,14 @@ public class SchedulingController {
     private void setupListeners() {
 
         showStudentBtn.setOnAction(e -> {
-            if (preparedSchedule == null) return;
+            if (preparedScheduleResult == null) return;
 
             Integer id = studentCombo.getValue();
             if (id == null) return;
 
             Map<LocalDate, List<ExamSession>> filtered = new LinkedHashMap<>();
 
-            for (var entry : preparedSchedule.entrySet()) {
+            for (var entry : preparedScheduleResult.getSchedule().entrySet()) {
                 List<ExamSession> list = new ArrayList<>();
                 for (ExamSession s : entry.getValue()) {
                     boolean ok = s.getCourse().getStudents()
@@ -333,14 +380,14 @@ public class SchedulingController {
         });
 
         showClassroomBtn.setOnAction(e -> {
-            if (preparedSchedule == null) return;
+            if (preparedScheduleResult == null) return;
 
             String room = classroomCombo.getValue();
             if (room == null) return;
 
             Map<LocalDate, List<ExamSession>> filtered = new LinkedHashMap<>();
 
-            for (var entry : preparedSchedule.entrySet()) {
+            for (var entry : preparedScheduleResult.getSchedule().entrySet()) {
                 List<ExamSession> list = new ArrayList<>();
                 for (ExamSession s : entry.getValue()) {
                     boolean ok = s.getPartitions().stream()
@@ -406,7 +453,7 @@ public class SchedulingController {
             return;
         }
 
-        preparedSchedule = scheduler.generateSchedule(
+        preparedScheduleResult = scheduler.generateSchedule(
             allStudentsList,
             allCourses,
             allClassrooms,
@@ -416,7 +463,8 @@ public class SchedulingController {
             endDatePicker.getValue()
         );
 
-        renderSchedule(preparedSchedule);
+        renderSchedule(preparedScheduleResult.getSchedule());
+        displayUnscheduledCourses(preparedScheduleResult.getUnscheduledCourses());
     }
 
     private void openFiltersPopup() {
@@ -443,7 +491,7 @@ public class SchedulingController {
             popup.showAndWait();
 
             userConfig = ctrl.buildConfig();
-            preparedSchedule = null;
+            preparedScheduleResult = null;
 
             if (startDatePicker.getValue() != null && endDatePicker.getValue() != null) {
                 renderEmptySchedule(
