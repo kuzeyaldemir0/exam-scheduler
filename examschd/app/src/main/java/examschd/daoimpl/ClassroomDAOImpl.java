@@ -27,24 +27,56 @@ public class ClassroomDAOImpl implements ClassroomDAO {
     public List<Classroom> getAll() throws SQLException {
         List<Classroom> list = new ArrayList<>();
 
-        String sql = "SELECT classroom_name, capacity FROM Classroom";
+        String sql = "SELECT rowid, classroom_name, capacity FROM Classroom";
 
         try (Connection conn = DB.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery()) {
 
-            int id = 1;
             while (rs.next()) {
                 Classroom c = new Classroom(
-                        id,
-                        rs.getString("classroom_name"),
-                        rs.getInt("capacity")
+                    rs.getInt("rowid"),           
+                    rs.getString("classroom_name"),
+                    rs.getInt("capacity")
                 );
-                id++;
                 list.add(c);
             }
         }
 
         return list;
     }
+
+    //clears all table data
+    @Override
+    public void clear() throws SQLException {
+    try (Connection conn = DB.getConnection();
+         PreparedStatement ps =
+             conn.prepareStatement("DELETE FROM Classroom")) {
+        ps.executeUpdate();
+    }
+}
+    //deletes classrooms by their IDs
+    @Override
+    public void deleteByIds(List<Integer> ids) throws SQLException {
+        if (ids == null || ids.isEmpty()) return;
+
+        StringBuilder sql = new StringBuilder(
+                "DELETE FROM Classroom WHERE rowid IN (");
+
+        for (int i = 0; i < ids.size(); i++) {
+            sql.append("?");
+            if (i < ids.size() - 1) sql.append(",");
+        }
+        sql.append(")");
+
+        try (Connection conn = DB.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < ids.size(); i++) {
+                ps.setInt(i + 1, ids.get(i));
+            }
+            ps.executeUpdate();
+        }
+    }
+
 }

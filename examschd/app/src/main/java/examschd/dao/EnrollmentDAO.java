@@ -8,4 +8,6 @@ import java.sql.SQLException;
 public interface EnrollmentDAO {
     void insert(Enrollment enrollment) throws SQLException;
     List<Enrollment> getAll() throws SQLException;
+    void deleteByIds(List<Integer> ids) throws SQLException; 
+    void clear() throws SQLException;                         
 }

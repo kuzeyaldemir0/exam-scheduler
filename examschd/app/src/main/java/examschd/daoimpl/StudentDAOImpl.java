@@ -48,4 +48,40 @@ public class StudentDAOImpl implements StudentDAO {
         return list;
     }
 
+    @Override
+    public void clear() throws SQLException {
+        String sql = "DELETE FROM Students";
+
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public void deleteByIds(List<Integer> ids) throws SQLException {
+        if (ids == null || ids.isEmpty()) {
+            return; 
+        }
+
+        StringBuilder sql = new StringBuilder("DELETE FROM Students WHERE student_id IN (");
+        for (int i = 0; i < ids.size(); i++) {
+            sql.append("?");
+            if (i < ids.size() - 1) {
+                sql.append(", ");
+            }
+        }
+        sql.append(")");
+
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < ids.size(); i++) {
+                ps.setInt(i + 1, ids.get(i));
+            }
+
+            ps.executeUpdate();
+        }
+    }
+
 }

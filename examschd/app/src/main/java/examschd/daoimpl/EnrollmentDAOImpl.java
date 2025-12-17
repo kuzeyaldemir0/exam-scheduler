@@ -32,7 +32,6 @@ public class EnrollmentDAOImpl implements EnrollmentDAO {
         }
     }
 
-    // ✅ SADECE EKLENEN KISIM
     @Override
     public List<Enrollment> getAll() {
         List<Enrollment> list = new ArrayList<>();
@@ -53,5 +52,28 @@ public class EnrollmentDAOImpl implements EnrollmentDAO {
         }
 
         return list;
+    }
+
+    @Override
+    public void clear() throws SQLException {
+        try (Connection conn = DB.getConnection();
+            PreparedStatement ps =
+                    conn.prepareStatement("DELETE FROM Enrollments")) {
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public void deleteByIds(List<Integer> ids) throws SQLException {
+        String sql = "DELETE FROM Enrollments WHERE student_id=?";
+
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (int id : ids) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+        }
     }
 }

@@ -50,4 +50,39 @@ public class CourseDAOImpl implements CourseDAO {
         return courses;
     }
 
+    //clear all courses
+    @Override
+    public void clear() throws SQLException {
+        try (Connection conn = DB.getConnection();
+            PreparedStatement ps =
+                conn.prepareStatement("DELETE FROM Courses")) {
+            ps.executeUpdate();
+        }
+    }
+
+    //delete courses by a list of course IDs
+    @Override
+    public void deleteByCourseIds(List<Integer> ids) throws SQLException {
+        if (ids == null || ids.isEmpty()) return;
+
+        StringBuilder sql = new StringBuilder(
+            "DELETE FROM Courses WHERE course_id IN ("
+        );
+
+        for (int i = 0; i < ids.size(); i++) {
+            sql.append("?");
+            if (i < ids.size() - 1) sql.append(",");
+        }
+        sql.append(")");
+
+        try (Connection conn = DB.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < ids.size(); i++) {
+                ps.setInt(i + 1, ids.get(i));
+            }
+            ps.executeUpdate();
+        }
+    }
+
 }
