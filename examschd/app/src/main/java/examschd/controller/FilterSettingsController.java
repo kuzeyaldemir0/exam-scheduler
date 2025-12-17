@@ -18,6 +18,8 @@ public class FilterSettingsController {
 
     @FXML private Spinner<Integer> maxExamsSpinner;
     @FXML private Spinner<Integer> breakTimeSpinner;
+    @FXML private Spinner<Integer> examStartHourSpinner;
+    @FXML private Spinner<Integer> examEndHourSpinner;
 
     /* ===================== STATE ===================== */
 
@@ -27,6 +29,8 @@ public class FilterSettingsController {
 
     private int savedMaxExams = 2;
     private int savedBreakTime = 30;
+    private int savedExamStartHour = 9;
+    private int savedExamEndHour = 21;
 
     /* ===================== INIT ===================== */
 
@@ -43,6 +47,14 @@ public class FilterSettingsController {
 
         breakTimeSpinner.setValueFactory(
             new SpinnerValueFactory.IntegerSpinnerValueFactory(10, 180, savedBreakTime)
+        );
+
+        examStartHourSpinner.setValueFactory(
+            new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, savedExamStartHour)
+        );
+
+        examEndHourSpinner.setValueFactory(
+            new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 23, savedExamEndHour)
         );
     }
 
@@ -83,12 +95,20 @@ public class FilterSettingsController {
     }
 
     public void loadExtraSettings(int maxExams, int breakTime) {
+        loadExtraSettings(maxExams, breakTime, 9, 21);
+    }
+
+    public void loadExtraSettings(int maxExams, int breakTime, int startHour, int endHour) {
 
         savedMaxExams = maxExams;
         savedBreakTime = breakTime;
+        savedExamStartHour = startHour;
+        savedExamEndHour = endHour;
 
         maxExamsSpinner.getValueFactory().setValue(maxExams);
         breakTimeSpinner.getValueFactory().setValue(breakTime);
+        examStartHourSpinner.getValueFactory().setValue(startHour);
+        examEndHourSpinner.getValueFactory().setValue(endHour);
     }
 
     /* ===================== BUILD CONFIG ===================== */
@@ -104,12 +124,17 @@ public class FilterSettingsController {
             }
         }
 
-        return new ExamConfig(
-            Collections.emptyMap(),          // ❌ allowed days YOK
+        ExamConfig config = new ExamConfig(
+            Collections.emptyMap(),
             maxExamsSpinner.getValue(),
             breakTimeSpinner.getValue(),
             durations
         );
+
+        config.setExamStartHour(examStartHourSpinner.getValue());
+        config.setExamEndHour(examEndHourSpinner.getValue());
+
+        return config;
     }
 
     /* ===================== ACTIONS ===================== */

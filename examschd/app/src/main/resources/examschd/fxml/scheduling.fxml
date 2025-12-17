@@ -98,9 +98,9 @@
 
         <ScrollPane fx:id="scheduleScroll"
                     fitToWidth="false"
-                    fitToHeight="true"
+                    fitToHeight="false"
                     hbarPolicy="AS_NEEDED"
-                    vbarPolicy="NEVER"
+                    vbarPolicy="AS_NEEDED"
                     pannable="true"
                     VBox.vgrow="ALWAYS"
                     prefHeight="400">

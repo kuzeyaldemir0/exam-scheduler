@@ -1,6 +1,7 @@
 package examschd.controller;
 
 import examschd.model.*;
+import examschd.model.StudentAssignment;
 import examschd.service.ImportService;
 import examschd.service.Scheduler;
 
@@ -55,6 +56,7 @@ public class SchedulingController {
 
     private ExamConfig userConfig = new ExamConfig();
     private final BooleanProperty dateRangeApplied = new SimpleBooleanProperty(false);
+    private Integer filteredStudentId = null;  // Track student filter for room display
 
     private final ImportService importService = new ImportService();
     private final Scheduler scheduler = new Scheduler();
@@ -109,6 +111,8 @@ public class SchedulingController {
         userConfig.setCourseDurations(dur);
         userConfig.setMaxExamsPerDay(2);
         userConfig.setBreakTimeBetweenExams(30);
+        userConfig.setExamStartHour(9);
+        userConfig.setExamEndHour(21);
     }
 
     private void renderEmptySchedule(LocalDate start, LocalDate end) {
@@ -186,15 +190,49 @@ public class SchedulingController {
 
             for (ExamSession session : sessions) {
 
-                String courseName = session.getCourse().getCourseName();
-                String time = session.getTimeSlot();
-                int studentCount = session.getCourse().getStudents().size();
+                // Defensive null checks
+                Course course = session.getCourse();
+                if (course == null) {
+                    System.out.println("ERROR: Session " + session.getSessionId() + " has null course!");
+                    continue;
+                }
+
+                String courseName = course.getCourseName() != null ? course.getCourseName() : "[Unknown Course]";
+                String time = session.getStartTime() != null ? session.getTimeSlot() : "[No Time]";
+                int studentCount = course.getStudents() != null ? course.getStudents().size() : 0;
 
                 Set<String> rooms = new LinkedHashSet<>();
-                for (ExamPartition p : session.getPartitions()) {
-                    if (p.getClassroom() != null) {
-                        rooms.add(p.getClassroom().getName());
+                List<ExamPartition> partitions = session.getPartitions();
+                if (partitions != null) {
+                    // If filtering by student, only show their assigned classroom
+                    if (filteredStudentId != null) {
+                        for (ExamPartition p : partitions) {
+                            if (p != null && p.getStudentAssignments() != null) {
+                                for (StudentAssignment sa : p.getStudentAssignments()) {
+                                    if (sa.getStudent() != null && sa.getStudent().getId() == filteredStudentId) {
+                                        if (p.getClassroom() != null) {
+                                            rooms.add(p.getClassroom().getName());
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Show all classrooms
+                        for (ExamPartition p : partitions) {
+                            if (p != null && p.getClassroom() != null) {
+                                rooms.add(p.getClassroom().getName());
+                            }
+                        }
                     }
+                }
+
+                // Debug logging for problematic sessions
+                if (time.equals("[No Time]") || rooms.isEmpty()) {
+                    System.out.println("WARN: Session " + courseName + " has issues - time=" + time +
+                        ", partitions=" + (partitions != null ? partitions.size() : 0) +
+                        ", rooms=" + rooms.size());
                 }
 
                 String text =
@@ -205,6 +243,7 @@ public class SchedulingController {
                 Label examLabel = new Label(text);
                 examLabel.setWrapText(true);
                 examLabel.setMaxWidth(Double.MAX_VALUE);
+                examLabel.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
 
                 examLabel.setStyle(
                     "-fx-background-color:#E3F2FD;" +
@@ -315,7 +354,8 @@ public class SchedulingController {
             setupSearchFilters();
             initDefaultConfig();
 
-            System.out.println("Data imported and UI refreshed.");
+            System.out.println("Data imported and UI refreshed");
+            System.out.println("Exam hours set to: " + userConfig.getExamStartHour() + ":00 - " + userConfig.getExamEndHour() + ":00");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -363,6 +403,8 @@ public class SchedulingController {
             Integer id = studentCombo.getValue();
             if (id == null) return;
 
+            filteredStudentId = id;  // Set filter for room display
+
             Map<LocalDate, List<ExamSession>> filtered = new LinkedHashMap<>();
 
             for (var entry : preparedScheduleResult.getSchedule().entrySet()) {
@@ -384,6 +426,8 @@ public class SchedulingController {
 
             String room = classroomCombo.getValue();
             if (room == null) return;
+
+            filteredStudentId = null;  // Clear student filter
 
             Map<LocalDate, List<ExamSession>> filtered = new LinkedHashMap<>();
 
@@ -453,6 +497,8 @@ public class SchedulingController {
             return;
         }
 
+        filteredStudentId = null;  // Clear any student filter
+
         preparedScheduleResult = scheduler.generateSchedule(
             allStudentsList,
             allCourses,
@@ -479,7 +525,9 @@ public class SchedulingController {
 
             ctrl.loadExtraSettings(
                 userConfig.getMaxExamsPerDay(),
-                userConfig.getBreakTimeBetweenExams()
+                userConfig.getBreakTimeBetweenExams(),
+                userConfig.getExamStartHour(),
+                userConfig.getExamEndHour()
             );
 
             

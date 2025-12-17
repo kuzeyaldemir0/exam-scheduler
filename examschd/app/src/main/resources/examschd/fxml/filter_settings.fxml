@@ -7,7 +7,7 @@
 <AnchorPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="examschd.controller.FilterSettingsController"
             stylesheets="@../../css/filter_settings.css"
-            prefWidth="650" prefHeight="420">
+            prefWidth="650" prefHeight="520">
 
     <VBox alignment="TOP_CENTER"
           spacing="25"
@@ -40,6 +40,21 @@
             <Label text="Min break between exams (minutes):" styleClass="label"/>
             <Spinner fx:id="breakTimeSpinner" prefWidth="90"/>
         </HBox>
+
+        <!-- EXAM HOURS SECTION -->
+        <VBox spacing="10">
+            <Label text="Exam Day Hours" styleClass="section-title"/>
+
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label text="Start time (hour):" styleClass="label"/>
+                <Spinner fx:id="examStartHourSpinner" prefWidth="90"/>
+            </HBox>
+
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label text="End time (hour):" styleClass="label"/>
+                <Spinner fx:id="examEndHourSpinner" prefWidth="90"/>
+            </HBox>
+        </VBox>
 
         <!-- BUTTONS -->
         <HBox alignment="CENTER_RIGHT" spacing="20">
