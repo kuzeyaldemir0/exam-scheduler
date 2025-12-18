@@ -54,9 +54,11 @@ public class CourseDAOImpl implements CourseDAO {
     @Override
     public void clear() throws SQLException {
         try (Connection conn = DB.getConnection();
-            PreparedStatement ps =
-                conn.prepareStatement("DELETE FROM Courses")) {
-            ps.executeUpdate();
+             PreparedStatement psEnr = conn.prepareStatement("DELETE FROM Enrollments");
+             PreparedStatement psCourses = conn.prepareStatement("DELETE FROM Courses")) {
+            
+            psEnr.executeUpdate();
+            psCourses.executeUpdate();
         }
     }
 
@@ -64,6 +66,24 @@ public class CourseDAOImpl implements CourseDAO {
     @Override
     public void deleteByCourseIds(List<Integer> ids) throws SQLException {
         if (ids == null || ids.isEmpty()) return;
+
+        // 1. Delete associated enrollments (Manual CASCADE)
+        StringBuilder sqlEnr = new StringBuilder("DELETE FROM Enrollments WHERE course_id IN (");
+        for (int i = 0; i < ids.size(); i++) {
+            sqlEnr.append("?");
+            if (i < ids.size() - 1) sqlEnr.append(",");
+        }
+        sqlEnr.append(")");
+
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlEnr.toString())) {
+            for (int i = 0; i < ids.size(); i++) {
+                ps.setInt(i + 1, ids.get(i));
+            }
+            ps.executeUpdate();
+        }
+
+        // 2. Delete courses
 
         StringBuilder sql = new StringBuilder(
             "DELETE FROM Courses WHERE course_id IN ("
@@ -82,6 +102,18 @@ public class CourseDAOImpl implements CourseDAO {
                 ps.setInt(i + 1, ids.get(i));
             }
             ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public boolean update(Course course) throws SQLException {
+        String sql = "UPDATE Courses SET course_name = ? WHERE course_id = ?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, course.getCourseName());
+            ps.setInt(2, course.getCourseId());
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
         }
     }
 

@@ -50,19 +50,42 @@ public class StudentDAOImpl implements StudentDAO {
 
     @Override
     public void clear() throws SQLException {
-        String sql = "DELETE FROM Students";
+        // First delete dependent records (Enrollments)
+        String sqlEnrollments = "DELETE FROM Enrollments";
+        String sqlStudents = "DELETE FROM Students";
 
         try (Connection conn = DB.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.executeUpdate();
+             PreparedStatement psEnr = conn.prepareStatement(sqlEnrollments);
+             PreparedStatement psStd = conn.prepareStatement(sqlStudents)) {
+             
+            psEnr.executeUpdate();
+            psStd.executeUpdate();
         }
     }
 
     @Override
     public void deleteByIds(List<Integer> ids) throws SQLException {
         if (ids == null || ids.isEmpty()) {
-            return; 
+            return;
         }
+
+        // Delete associated enrollments (Manual CASCADE)
+        StringBuilder sqlEnr = new StringBuilder("DELETE FROM Enrollments WHERE student_id IN (");
+        for (int i = 0; i < ids.size(); i++) {
+            sqlEnr.append("?");
+            if (i < ids.size() - 1) sqlEnr.append(", ");
+        }
+        sqlEnr.append(")");
+
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlEnr.toString())) {
+            for (int i = 0; i < ids.size(); i++) {
+                ps.setInt(i + 1, ids.get(i));
+            }
+            ps.executeUpdate();
+        }
+
+        // Delete students
 
         StringBuilder sql = new StringBuilder("DELETE FROM Students WHERE student_id IN (");
         for (int i = 0; i < ids.size(); i++) {
@@ -81,6 +104,18 @@ public class StudentDAOImpl implements StudentDAO {
             }
 
             ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public boolean update(Student student) throws SQLException {
+        String sql = "UPDATE Students SET student_name = ? WHERE student_id = ?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, student.getStudentName());
+            ps.setInt(2, student.getId());
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
         }
     }
 

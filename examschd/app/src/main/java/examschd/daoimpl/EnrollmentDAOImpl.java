@@ -76,4 +76,48 @@ public class EnrollmentDAOImpl implements EnrollmentDAO {
             }
         }
     }
+
+
+    @Override
+    public boolean enroll(int studentId, int courseId) throws SQLException {
+        String sql = "INSERT INTO Enrollments (student_id, course_id) VALUES (?, ?)";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            ps.setInt(2, courseId);
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            // Check if constraint violation (already enrolled)
+            // Ideally should check error code, but for now just propagate or return a specific status
+            throw e;
+        }
+    }
+
+    @Override
+    public boolean withdraw(int studentId, int courseId) throws SQLException {
+        String sql = "DELETE FROM Enrollments WHERE student_id = ? AND course_id = ?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            ps.setInt(2, courseId);
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        }
+    }
+
+    @Override
+    public boolean updateCourseForStudent(int studentId, int oldCourseId, int newCourseId) throws SQLException {
+        // We can do an UPDATE. Or DELETE + CHECK INSERT.
+        // UPDATE is safer/atomic
+        String sql = "UPDATE Enrollments SET course_id = ? WHERE student_id = ? AND course_id = ?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, newCourseId);
+            ps.setInt(2, studentId);
+            ps.setInt(3, oldCourseId);
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        }
+    }
 }

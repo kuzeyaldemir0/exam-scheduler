@@ -10,4 +10,5 @@ public interface StudentDAO {
     List<Student> getAll() throws SQLException;
     void clear() throws SQLException;
     void deleteByIds(List<Integer> ids) throws SQLException;
+    boolean update(Student student) throws SQLException;
 }

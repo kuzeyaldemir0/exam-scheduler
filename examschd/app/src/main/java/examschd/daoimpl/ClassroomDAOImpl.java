@@ -79,4 +79,17 @@ public class ClassroomDAOImpl implements ClassroomDAO {
         }
     }
 
+    @Override
+    public boolean update(Classroom classroom) throws SQLException {
+        String sql = "UPDATE Classroom SET classroom_name = ?, capacity = ? WHERE rowid = ?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, classroom.getName());
+            ps.setInt(2, classroom.getCapacity());
+            ps.setInt(3, classroom.getClassroomId());
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+
 }

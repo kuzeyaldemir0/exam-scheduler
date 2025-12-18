@@ -10,4 +10,5 @@ public interface CourseDAO {
     List<Course> getAll() throws SQLException;
     void clear() throws SQLException;
     void deleteByCourseIds(List<Integer> courseIds) throws SQLException;
+    boolean update(Course course) throws SQLException;
 }

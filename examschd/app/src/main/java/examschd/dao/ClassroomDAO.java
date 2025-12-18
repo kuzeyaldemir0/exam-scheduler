@@ -10,4 +10,5 @@ public interface ClassroomDAO {
     List<Classroom> getAll() throws SQLException;
     void clear() throws SQLException; 
     void deleteByIds(List<Integer> ids) throws SQLException;
+    boolean update(Classroom classroom) throws SQLException;
 }

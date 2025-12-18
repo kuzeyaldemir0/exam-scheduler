@@ -10,4 +10,7 @@ public interface EnrollmentDAO {
     List<Enrollment> getAll() throws SQLException;
     void deleteByIds(List<Integer> ids) throws SQLException; 
     void clear() throws SQLException;                         
+    boolean enroll(int studentId, int courseId) throws SQLException;
+    boolean withdraw(int studentId, int courseId) throws SQLException;
+    boolean updateCourseForStudent(int studentId, int oldCourseId, int newCourseId) throws SQLException;
 }
