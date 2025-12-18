@@ -7,7 +7,8 @@ import java.util.Map;
 public class ExamConfig {
 
     private int maxExamsPerDay = 2;
-    private int breakTimeBetweenExams = 30;
+    private int roomTurnoverMinutes = 15;      // Time for room changeover between exams
+    private int studentMinGapMinutes = 90;     // Minimum gap between exams for same student
 
     private Map<String, Integer> courseDurations = new LinkedHashMap<>();
 
@@ -21,11 +22,13 @@ public class ExamConfig {
 
     public ExamConfig(Map<LocalDate, Boolean> allowedExamDays,
                       int maxExamsPerDay,
-                      int breakTimeBetweenExams,
+                      int roomTurnoverMinutes,
+                      int studentMinGapMinutes,
                       Map<String, Integer> courseDurations) {
 
         this.maxExamsPerDay = maxExamsPerDay;
-        this.breakTimeBetweenExams = breakTimeBetweenExams;
+        this.roomTurnoverMinutes = roomTurnoverMinutes;
+        this.studentMinGapMinutes = studentMinGapMinutes;
         this.courseDurations = courseDurations;
     }
 
@@ -34,8 +37,12 @@ public class ExamConfig {
         return maxExamsPerDay;
     }
 
-    public int getBreakTimeBetweenExams() {
-        return breakTimeBetweenExams;
+    public int getRoomTurnoverMinutes() {
+        return roomTurnoverMinutes;
+    }
+
+    public int getStudentMinGapMinutes() {
+        return studentMinGapMinutes;
     }
 
     public Map<String, Integer> getCourseDurations() {
@@ -46,8 +53,12 @@ public class ExamConfig {
         this.maxExamsPerDay = maxExamsPerDay;
     }
 
-    public void setBreakTimeBetweenExams(int breakTimeBetweenExams) {
-        this.breakTimeBetweenExams = breakTimeBetweenExams;
+    public void setRoomTurnoverMinutes(int roomTurnoverMinutes) {
+        this.roomTurnoverMinutes = roomTurnoverMinutes;
+    }
+
+    public void setStudentMinGapMinutes(int studentMinGapMinutes) {
+        this.studentMinGapMinutes = studentMinGapMinutes;
     }
 
     public void setCourseDurations(Map<String, Integer> courseDurations) {
@@ -73,8 +84,9 @@ public class ExamConfig {
     @Override
     public String toString() {
         return "ExamConfig{" +
-                ", maxExamsPerDay=" + maxExamsPerDay +
-                ", breakTimeBetweenExams=" + breakTimeBetweenExams +
+                "maxExamsPerDay=" + maxExamsPerDay +
+                ", roomTurnoverMinutes=" + roomTurnoverMinutes +
+                ", studentMinGapMinutes=" + studentMinGapMinutes +
                 ", courseDurations=" + courseDurations +
                 ", examStartHour=" + examStartHour +
                 ", examEndHour=" + examEndHour +

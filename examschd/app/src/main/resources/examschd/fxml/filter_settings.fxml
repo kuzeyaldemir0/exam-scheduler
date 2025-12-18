@@ -35,10 +35,16 @@
             <Spinner fx:id="maxExamsSpinner" prefWidth="90"/>
         </HBox>
 
-        <!-- BREAK TIME BETWEEN EXAMS -->
+        <!-- ROOM TURNOVER TIME -->
         <HBox spacing="15" alignment="CENTER_LEFT">
-            <Label text="Min break between exams (minutes):" styleClass="label"/>
-            <Spinner fx:id="breakTimeSpinner" prefWidth="90"/>
+            <Label text="Room turnover time (minutes):" styleClass="label"/>
+            <Spinner fx:id="roomTurnoverSpinner" prefWidth="90"/>
+        </HBox>
+
+        <!-- STUDENT MINIMUM GAP -->
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <Label text="Min gap between exams for student (minutes):" styleClass="label"/>
+            <Spinner fx:id="studentGapSpinner" prefWidth="90"/>
         </HBox>
 
         <!-- EXAM HOURS SECTION -->

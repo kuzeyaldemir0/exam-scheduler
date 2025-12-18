@@ -195,7 +195,8 @@ public class Scheduler {
         System.out.println("Config: startHour=" + config.getExamStartHour() +
             ", endHour=" + config.getExamEndHour() +
             ", maxExamsPerDay=" + config.getMaxExamsPerDay() +
-            ", breakTime=" + config.getBreakTimeBetweenExams());
+            ", roomTurnover=" + config.getRoomTurnoverMinutes() +
+            "min, studentGap=" + config.getStudentMinGapMinutes() + "min");
         System.out.println("Classrooms available: " + classrooms.size());
         for (Classroom c : classrooms) {
             System.out.println("  - " + c.getName() + " (capacity: " + c.getCapacity() + ")");
@@ -208,7 +209,8 @@ public class Scheduler {
         if (examDays.isEmpty()) return new ScheduleResult(new LinkedHashMap<>(), new ArrayList<>());
 
         int maxExamsPerDay = config.getMaxExamsPerDay();
-        int breakTimeMinutes = config.getBreakTimeBetweenExams();
+        int roomTurnoverMinutes = config.getRoomTurnoverMinutes();
+        int studentGapMinutes = config.getStudentMinGapMinutes();
 
         List<Course> sortedCourses = sortByEnrollment(courses);
         List<Course> unscheduledCourses = new ArrayList<>();
@@ -241,8 +243,8 @@ public class Scheduler {
                     continue;
                 }
 
-                // Get sessions already at this time slot
-                List<ExamSession> sessionsAtTime = getSessionsAtTime(existingStart, endTime, breakTimeMinutes, allScheduledSessions);
+                // Get sessions already at this time slot (use student gap to check for student conflicts)
+                List<ExamSession> sessionsAtTime = getSessionsAtTime(existingStart, endTime, studentGapMinutes, allScheduledSessions);
 
                 // Check if course has student conflict with any session at this time
                 if (courseHasStudentConflictWith(course, sessionsAtTime)) {
@@ -260,9 +262,9 @@ public class Scheduler {
 
                 if (!canSchedule) continue;
 
-                // Try to assign rooms
+                // Try to assign rooms (use room turnover for room availability)
                 List<Classroom> assignedRooms = findAvailableRooms(
-                    existingStart, endTime, studentCount, classrooms, breakTimeMinutes, allScheduledSessions
+                    existingStart, endTime, studentCount, classrooms, roomTurnoverMinutes, allScheduledSessions
                 );
 
                 if (assignedRooms == null) {
@@ -330,8 +332,8 @@ public class Scheduler {
 
                         // Check constraints for each student in this course
                         for (Student student : course.getStudents()) {
-                            // Check if student has time conflict
-                            if (studentHasConflictAt(student, startTime, endTime, breakTimeMinutes, allScheduledSessions)) {
+                            // Check if student has time conflict (use student gap)
+                            if (studentHasConflictAt(student, startTime, endTime, studentGapMinutes, allScheduledSessions)) {
                                 canSchedule = false;
                                 break;
                             }
@@ -345,9 +347,9 @@ public class Scheduler {
 
                         if (!canSchedule) continue;
 
-                        // Try to assign rooms
+                        // Try to assign rooms (use room turnover)
                         List<Classroom> assignedRooms = findAvailableRooms(
-                            startTime, endTime, studentCount, classrooms, breakTimeMinutes, allScheduledSessions
+                            startTime, endTime, studentCount, classrooms, roomTurnoverMinutes, allScheduledSessions
                         );
 
                         if (assignedRooms == null) {
@@ -429,8 +431,8 @@ public class Scheduler {
                         continue;
                     }
 
-                    // Get all sessions at this time slot
-                    List<ExamSession> sessionsAtTime = getSessionsAtTime(startTime, endTime, breakTimeMinutes, allScheduledSessions);
+                    // Get all sessions at this time slot (use student gap for conflict check)
+                    List<ExamSession> sessionsAtTime = getSessionsAtTime(startTime, endTime, studentGapMinutes, allScheduledSessions);
 
                     // Check if course has student conflict with any session at this time
                     if (courseHasStudentConflictWith(course, sessionsAtTime)) {
@@ -450,9 +452,9 @@ public class Scheduler {
 
                     if (!canSchedule) continue;
 
-                    // Try to assign rooms
+                    // Try to assign rooms (use room turnover)
                     List<Classroom> assignedRooms = findAvailableRooms(
-                        startTime, endTime, studentCount, classrooms, breakTimeMinutes, allScheduledSessions
+                        startTime, endTime, studentCount, classrooms, roomTurnoverMinutes, allScheduledSessions
                     );
 
                     if (assignedRooms == null) {

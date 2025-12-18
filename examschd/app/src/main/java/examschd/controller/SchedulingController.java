@@ -110,7 +110,8 @@ public class SchedulingController {
 
         userConfig.setCourseDurations(dur);
         userConfig.setMaxExamsPerDay(2);
-        userConfig.setBreakTimeBetweenExams(30);
+        userConfig.setRoomTurnoverMinutes(15);
+        userConfig.setStudentMinGapMinutes(90);
         userConfig.setExamStartHour(9);
         userConfig.setExamEndHour(21);
     }
@@ -363,6 +364,38 @@ public class SchedulingController {
     }
 
     @FXML
+    private void showHelp() {
+        Alert helpDialog = new Alert(Alert.AlertType.INFORMATION);
+        helpDialog.setTitle("How to Use Exam Scheduler");
+        helpDialog.setHeaderText("Getting Started Guide");
+        helpDialog.setContentText(
+            "1. IMPORT DATA\n" +
+            "   Click 'Import all data' to upload your CSV files:\n" +
+            "   • students.csv - List of student IDs\n" +
+            "   • courses.csv - List of course codes\n" +
+            "   • classrooms.csv - Room names and capacities\n" +
+            "   • enrollments.csv - Which students take which courses\n\n" +
+            "2. SET DATE RANGE\n" +
+            "   Select start and end dates for your exam period,\n" +
+            "   then click 'Apply Date Range' to confirm.\n\n" +
+            "3. CONFIGURE SETTINGS (Optional)\n" +
+            "   Click 'Filter Settings' to adjust:\n" +
+            "   • Max exams per student per day\n" +
+            "   • Room turnover time between exams\n" +
+            "   • Minimum gap between exams for students\n" +
+            "   • Exam duration per course\n\n" +
+            "4. GENERATE SCHEDULE\n" +
+            "   Click 'Generate Schedule' to create the timetable.\n" +
+            "   The calendar will show all scheduled exams.\n\n" +
+            "5. VIEW SCHEDULES\n" +
+            "   • Select a student ID to see their personal exam schedule\n" +
+            "   • Select a classroom to see exams in that room"
+        );
+        helpDialog.getDialogPane().setMinWidth(500);
+        helpDialog.showAndWait();
+    }
+
+    @FXML
     private void openImportPopup() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -525,7 +558,8 @@ public class SchedulingController {
 
             ctrl.loadExtraSettings(
                 userConfig.getMaxExamsPerDay(),
-                userConfig.getBreakTimeBetweenExams(),
+                userConfig.getRoomTurnoverMinutes(),
+                userConfig.getStudentMinGapMinutes(),
                 userConfig.getExamStartHour(),
                 userConfig.getExamEndHour()
             );

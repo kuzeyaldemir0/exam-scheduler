@@ -19,6 +19,11 @@
                styleClass="title"/>
 
         <HBox spacing="15" alignment="CENTER">
+            <Button fx:id="helpBtn"
+                    text="Help"
+                    onAction="#showHelp"
+                    styleClass="blue-button"/>
+
             <Button fx:id="openFiltersBtn"
                     text="Filter Settings"
                     styleClass="blue-button"/>

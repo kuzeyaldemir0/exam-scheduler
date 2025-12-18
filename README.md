@@ -8,20 +8,21 @@ A desktop application for generating conflict-free exam timetables with automati
 - **CSV Import**: Students, courses, classrooms, enrollments
 - **Greedy Scheduling Algorithm**: Largest courses first
 - **Constraint Checking**:
-  - No student conflicts (same time slot)
+  - No student conflicts (overlapping exams)
   - Max 2 exams per day per student
-  - No back-to-back exams
+  - Minimum 90-minute gap between exams for students
+  - 15-minute room turnover time between exams
 - **Classroom Assignment**: Automatic bin-packing by capacity
 - **Room Splitting**: Large courses split across multiple classrooms
 - **Calendar View**: Visual grid showing scheduled exams
+- **Student Schedule View**: Filter exams by student ID
+- **Classroom Schedule View**: Filter exams by room
 - **User Configuration**: Date range selection, max exams per day
+- **Help Dialog**: In-app guide explaining the workflow
 - **Comprehensive Testing**: Stress tests up to 10,000 students, 500 courses
 
 ### Pending
-- Student schedule view (filter by student ID)
-- Classroom schedule view (filter by room)
 - PDF/CSV export
-- Backtracking algorithm for hard cases
 
 ## Tech Stack
 
@@ -64,15 +65,14 @@ examschd/app/src/main/java/examschd/
 **Greedy with Constraint Propagation**
 
 1. Sort courses by enrollment (largest first)
-2. For each course, try day/slot combinations:
-   - Check: No student has exam at same time
+2. For each course, try day/time combinations:
+   - Check: No student has overlapping exam (with 90-min gap requirement)
    - Check: No student exceeds max exams/day
-   - Check: No back-to-back exams for any student
-   - Check: Sufficient classroom capacity available
+   - Check: Sufficient classroom capacity available (with 15-min turnover)
 3. Assign classrooms using bin-packing (largest rooms first)
 4. Split across multiple rooms if needed
 
-**Time Complexity**: O(courses × days × slots × students)
+**Time Complexity**: O(courses × days × time_windows × students)
 
 ### Partial Scheduling & Success Rates
 
@@ -94,7 +94,7 @@ If the algorithm cannot schedule all courses due to constraints:
 
 #### Common Reasons for Failed Scheduling
 
-1. **Insufficient time slots** → Too many courses for available exam days
+1. **Insufficient exam time** → Too many courses for available exam days
 2. **Dense student conflicts** → Many students enrolled in same courses
 3. **Insufficient classroom capacity** → Not enough large rooms for big courses
 4. **Tight constraints** → Max 2 exams/day + no back-to-back = limited options
@@ -104,7 +104,7 @@ If the algorithm cannot schedule all courses due to constraints:
 **Recommended actions (in order):**
 
 1. **Extend exam period** → Add more days (14-21 days recommended)
-   - Each additional day = 6 more time slots
+   - Each additional day = more available exam hours
    - Most effective for improving success rate
 
 2. **Add more classrooms** or use larger rooms
@@ -217,7 +217,7 @@ Or view the report at: `examschd/app/build/reports/tests/test/index.html`
 - **Large scale**: 10,000 students, 500 courses (~730ms)
 - **Dense conflicts**: 500 students sharing most courses
 - **Varied capacities**: 10-500 students per course
-- **Limited time slots**: Scheduling with constrained availability
+- **Limited exam time**: Scheduling with constrained availability
 
 ### Performance Benchmarks
 
@@ -228,9 +228,10 @@ Or view the report at: `examschd/app/build/reports/tests/test/index.html`
 | Large | 10,000 | 500 | 50 | ~730ms |
 
 **All tests verify:**
-- No student has conflicting exams (same time slot)
+- No student has overlapping exams
 - Max exams per day constraint respected
-- No back-to-back exams for any student
+- Minimum 90-minute gap between exams for students
+- Room turnover time (15 min) respected between exams
 - Classroom capacity constraints honored
 - Multiple classrooms used (not just Classroom_01)
 
@@ -270,12 +271,17 @@ This allows flexible, reproducible testing without large CSV files.
 | **Start Date** | User-set | Date picker | First day of exam period |
 | **End Date** | User-set | Date picker | Last day of exam period |
 | **maxExamsPerDay** | 2 | Filter settings | Max exams per student per day |
-| **slotsPerDay** | 6 | Hardcoded | Time slots available each day |
-| **courseDurations** | 120 min | Config/Default | Per-course exam duration |
+| **roomTurnoverMinutes** | 15 | Filter settings | Time for room changeover between exams |
+| **studentMinGapMinutes** | 90 | Filter settings | Minimum gap between exams for same student |
+| **examStartHour** | 9 | Filter settings | Exam day start time (24-hour format) |
+| **examEndHour** | 21 | Filter settings | Exam day end time (24-hour format) |
+| **courseDurations** | 90 min | Config/Default | Per-course exam duration |
 
 The scheduler uses these settings to:
-- Determine available time slots (dates × slots per day)
+- Determine available exam windows (dates × exam hours)
 - Enforce max exams per day constraint
+- Ensure students have adequate rest between exams (90-min gap)
+- Allow rooms to be prepared between exams (15-min turnover)
 - Allocate appropriate exam durations
 
 ## Key Decisions
@@ -283,4 +289,4 @@ The scheduler uses these settings to:
 1. **Greedy over Backtracking**: Simpler, faster for typical cases. Backtracking planned for edge cases.
 2. **SQLite for Persistence**: Lightweight, no server needed. Data survives between sessions.
 3. **Bin-packing for Rooms**: Largest rooms first minimizes room count.
-4. **6 Slots/Day**: Hardcoded for now, configurable later.
+4. **Real-time Scheduling**: Exams scheduled at exact times (not fixed slots) within configurable exam hours (default 9:00-21:00).

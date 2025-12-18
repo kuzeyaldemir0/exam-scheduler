@@ -17,7 +17,8 @@ public class FilterSettingsController {
     @FXML private VBox courseDurationList;
 
     @FXML private Spinner<Integer> maxExamsSpinner;
-    @FXML private Spinner<Integer> breakTimeSpinner;
+    @FXML private Spinner<Integer> roomTurnoverSpinner;
+    @FXML private Spinner<Integer> studentGapSpinner;
     @FXML private Spinner<Integer> examStartHourSpinner;
     @FXML private Spinner<Integer> examEndHourSpinner;
 
@@ -28,7 +29,8 @@ public class FilterSettingsController {
     private final Map<Course, Spinner<Integer>> durationSpinners = new LinkedHashMap<>();
 
     private int savedMaxExams = 2;
-    private int savedBreakTime = 30;
+    private int savedRoomTurnover = 15;
+    private int savedStudentGap = 90;
     private int savedExamStartHour = 9;
     private int savedExamEndHour = 21;
 
@@ -45,8 +47,12 @@ public class FilterSettingsController {
             new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 5, savedMaxExams)
         );
 
-        breakTimeSpinner.setValueFactory(
-            new SpinnerValueFactory.IntegerSpinnerValueFactory(10, 180, savedBreakTime)
+        roomTurnoverSpinner.setValueFactory(
+            new SpinnerValueFactory.IntegerSpinnerValueFactory(5, 60, savedRoomTurnover)
+        );
+
+        studentGapSpinner.setValueFactory(
+            new SpinnerValueFactory.IntegerSpinnerValueFactory(30, 180, savedStudentGap)
         );
 
         examStartHourSpinner.setValueFactory(
@@ -94,19 +100,21 @@ public class FilterSettingsController {
         }
     }
 
-    public void loadExtraSettings(int maxExams, int breakTime) {
-        loadExtraSettings(maxExams, breakTime, 9, 21);
+    public void loadExtraSettings(int maxExams, int roomTurnover, int studentGap) {
+        loadExtraSettings(maxExams, roomTurnover, studentGap, 9, 21);
     }
 
-    public void loadExtraSettings(int maxExams, int breakTime, int startHour, int endHour) {
+    public void loadExtraSettings(int maxExams, int roomTurnover, int studentGap, int startHour, int endHour) {
 
         savedMaxExams = maxExams;
-        savedBreakTime = breakTime;
+        savedRoomTurnover = roomTurnover;
+        savedStudentGap = studentGap;
         savedExamStartHour = startHour;
         savedExamEndHour = endHour;
 
         maxExamsSpinner.getValueFactory().setValue(maxExams);
-        breakTimeSpinner.getValueFactory().setValue(breakTime);
+        roomTurnoverSpinner.getValueFactory().setValue(roomTurnover);
+        studentGapSpinner.getValueFactory().setValue(studentGap);
         examStartHourSpinner.getValueFactory().setValue(startHour);
         examEndHourSpinner.getValueFactory().setValue(endHour);
     }
@@ -127,7 +135,8 @@ public class FilterSettingsController {
         ExamConfig config = new ExamConfig(
             Collections.emptyMap(),
             maxExamsSpinner.getValue(),
-            breakTimeSpinner.getValue(),
+            roomTurnoverSpinner.getValue(),
+            studentGapSpinner.getValue(),
             durations
         );
 

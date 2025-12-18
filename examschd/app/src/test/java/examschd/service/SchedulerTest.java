@@ -60,7 +60,7 @@ class SchedulerTest {
 
         // Verify all courses scheduled
         int totalScheduled = result.values().stream().mapToInt(List::size).sum();
-        assertEquals(8, totalScheduled, "All 8 courses should be scheduled");
+        assertEquals(25, totalScheduled, "All 25 courses should be scheduled");
 
         // Verify each session has classroom partitions
         for (List<ExamSession> sessions : result.values()) {
@@ -293,7 +293,8 @@ class SchedulerTest {
         config.setMaxExamsPerDay(20);
         config.setExamStartHour(9);
         config.setExamEndHour(21);
-        config.setBreakTimeBetweenExams(30); // 30 min break between exams
+        config.setRoomTurnoverMinutes(15);   // 15 min room turnover
+        config.setStudentMinGapMinutes(90);  // 90 min gap between exams for students
 
         // Single day scheduling
         LocalDate day = LocalDate.now();
