@@ -40,7 +40,12 @@ public class EnrollmentCsvReader {
                 if (!line[0].startsWith("CourseCode_"))
                     continue;
 
-                String courseName = line[0].trim();
+                
+                // Course line
+                if (!line[0].startsWith("CourseCode_"))
+                    continue;
+
+                String courseName = line[0].trim().replaceAll(";+$", "");
                 //System.out.println("\n📘 Course: " + courseName);
 
                 // STUDENT LIST LINE
