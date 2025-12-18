@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 
 public class DB {
 
-    private static final String URL = "jdbc:sqlite:examscheduler.db";
+    private static final String DEFAULT_URL = "jdbc:sqlite:examscheduler.db";
 
     static {
         try {
@@ -17,7 +17,8 @@ public class DB {
 
     public static Connection getConnection() {
         try {
-            return DriverManager.getConnection(URL);
+            String url = System.getProperty("examschd.db.url", DEFAULT_URL);
+            return DriverManager.getConnection(url);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
