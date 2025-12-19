@@ -216,6 +216,23 @@ Sample CSV files are provided in `app/src/test/resources/csv/` for testing and d
 
 ## Running
 
+### Quick Start (Recommended)
+
+Simply double-click the launcher script for your platform:
+
+- **Windows**: Double-click [run.bat](run.bat)
+- **Mac**: Double-click [run.command](run.command)
+- **Linux**: Right-click [run.sh](run.sh) → "Run as Program" (or run from terminal)
+
+The launcher will automatically:
+- Check if Java is installed
+- Start the application
+- Show helpful error messages if needed
+
+### Manual Method
+
+Alternatively, you can run from the command line:
+
 ```bash
 cd examschd
 ./gradlew run
