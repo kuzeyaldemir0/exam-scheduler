@@ -14,6 +14,7 @@ import examschd.model.ExamSession;
 import examschd.model.ScheduleResult;
 import examschd.model.Student;
 import examschd.model.StudentAssignment;
+import examschd.model.TimeSlottedExam;
 
 public class Scheduler {
 
@@ -83,61 +84,6 @@ public class Scheduler {
         return result;
     }
 
-    private int getStudentExamsOnDay(Student student, LocalDate day, List<ExamSession> allScheduledSessions) {
-        int count = 0;
-        for (ExamSession session : allScheduledSessions) {
-            if (session.getStartTime() != null && session.getStartTime().toLocalDate().equals(day)) {
-                if (session.getCourse().getStudents().contains(student)) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-    private List<Classroom> findAvailableRooms(LocalDateTime startTime, LocalDateTime endTime,
-                                               int studentCount, List<Classroom> allRooms,
-                                               int breakTimeMinutes, List<ExamSession> allScheduledSessions) {
-        List<Classroom> availableRooms = new ArrayList<>();
-        LocalDateTime endTimeWithBreak = endTime.plusMinutes(breakTimeMinutes);
-
-        for (Classroom room : allRooms) {
-            boolean isAvailable = true;
-            for (ExamSession session : allScheduledSessions) {
-                for (ExamPartition partition : session.getPartitions()) {
-                    if (partition.getClassroom().equals(room)) {
-                        // Check if this room is occupied during our time window
-                        LocalDateTime sessionEndWithBreak = session.getEndTime().plusMinutes(breakTimeMinutes);
-                        if (!(endTimeWithBreak.isBefore(session.getStartTime()) ||
-                              sessionEndWithBreak.isBefore(startTime))) {
-                            isAvailable = false;
-                            break;
-                        }
-                    }
-                }
-                if (!isAvailable) break;
-            }
-            if (isAvailable) {
-                availableRooms.add(room);
-            }
-        }
-
-        // Sort by capacity descending (largest first)
-        availableRooms.sort((a, b) -> Integer.compare(b.getCapacity(), a.getCapacity()));
-
-        // Use bin-packing to assign rooms
-        List<Classroom> assignedRooms = new ArrayList<>();
-        int remaining = studentCount;
-
-        for (Classroom room : availableRooms) {
-            if (remaining <= 0) break;
-            assignedRooms.add(room);
-            remaining -= room.getCapacity();
-        }
-
-        return remaining > 0 ? null : assignedRooms;
-    }
-
     private List<Course> sortByEnrollment(List<Course> courses) {
         List<Course> sorted = new ArrayList<>(courses);
         sorted.sort((a, b) ->
@@ -180,6 +126,485 @@ public class Scheduler {
         return days;
     }
 
+    /* ===================== PHASE 1: TIME SLOT ASSIGNMENT ===================== */
+
+    /**
+     * Calculates the remaining classroom capacity available at a specific time slot.
+     * This method tracks EXACTLY how much capacity is left after accounting for exams
+     * already scheduled at this time. This precise tracking ensures Phase 2 will never
+     * fail due to insufficient classroom capacity.
+     *
+     * @param startTime the start time of the time slot
+     * @param endTime the end time of the time slot
+     * @param allRooms all available classrooms
+     * @param roomTurnoverMinutes buffer time needed between exams in same room
+     * @param alreadyTimeSlottedExams exams that have already been assigned to a time slot
+     * @return the remaining capacity available at this exact time slot (int)
+     */
+    private int getRemainingCapacityAtTimeSlot(
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            List<Classroom> allRooms,
+            int roomTurnoverMinutes,
+            List<TimeSlottedExam> alreadyTimeSlottedExams) {
+
+        // Step 1: Calculate total capacity of all available rooms at this time
+        int totalCapacityAtThisTime = 0;
+
+        for (Classroom currentRoom : allRooms) {
+            boolean isRoomAvailable = true;
+
+            // Check if this room is already committed to another exam at this time
+            LocalDateTime endTimeWithTurnover = endTime.plusMinutes(roomTurnoverMinutes);
+
+            for (TimeSlottedExam existingExam : alreadyTimeSlottedExams) {
+                // Check if the existing exam's time window overlaps with our requested time
+                LocalDateTime existingEndWithTurnover = existingExam.getEndTime().plusMinutes(roomTurnoverMinutes);
+
+                // If time windows overlap, this room cannot be used
+                if (!(endTimeWithTurnover.isBefore(existingExam.getStartTime()) ||
+                      existingEndWithTurnover.isBefore(startTime))) {
+                    isRoomAvailable = false;
+                    break;
+                }
+            }
+
+            if (isRoomAvailable) {
+                totalCapacityAtThisTime += currentRoom.getCapacity();
+            }
+        }
+
+        // Step 2: Subtract capacity already committed to exams at this exact time slot
+        int capacityCommitted = 0;
+
+        for (TimeSlottedExam existingExam : alreadyTimeSlottedExams) {
+            // Only count exams that are scheduled at this exact same time slot
+            if (existingExam.getStartTime().equals(startTime)) {
+                capacityCommitted += existingExam.getStudentCount();
+            }
+        }
+
+        // Step 3: Return the remaining available capacity
+        int remainingCapacity = totalCapacityAtThisTime - capacityCommitted;
+        return Math.max(0, remainingCapacity); // Never return negative
+    }
+
+    /**
+     * Phase 1 of scheduling: Assigns time slots to all courses.
+     * This method checks student constraints and classroom capacity to determine
+     * if a course can be scheduled at a specific time.
+     *
+     * @param sortedCourses courses to schedule (sorted by enrollment size)
+     * @param allRooms all available classrooms
+     * @param examDays all available exam days
+     * @param config scheduling configuration with constraints
+     * @return list of exams with assigned time slots (no classrooms yet)
+     */
+    private List<TimeSlottedExam> assignTimeSlots(
+            List<Course> sortedCourses,
+            List<Classroom> allRooms,
+            List<LocalDate> examDays,
+            ExamConfig config) {
+
+        System.out.println("\n=== PHASE 1: TIME SLOT ASSIGNMENT ===");
+
+        List<TimeSlottedExam> timeSlottedExams = new ArrayList<>();
+        Set<LocalDateTime> usedTimeSlots = new LinkedHashSet<>();
+
+        int maxExamsPerDay = config.getMaxExamsPerDay();
+        int roomTurnoverMinutes = config.getRoomTurnoverMinutes();
+        int studentGapMinutes = config.getStudentMinGapMinutes();
+
+        // Try to schedule each course
+        for (Course currentCourse : sortedCourses) {
+            boolean hasBeenScheduled = false;
+            int studentCount = currentCourse.getStudents().size();
+            int durationMinutes = currentCourse.getDurationMinutes();
+
+            // STRATEGY 1: Try to pack into existing time slots (bin-packing for efficiency)
+            for (LocalDateTime existingSlotStart : usedTimeSlots) {
+                if (hasBeenScheduled) {
+                    break; // Already scheduled this course, move to next
+                }
+
+                LocalDate dayOfExam = existingSlotStart.toLocalDate();
+                LocalDateTime slotEnd = existingSlotStart.plusMinutes(durationMinutes);
+
+                // Check 1: Would the exam exceed the day boundary?
+                if (wouldExceedDayBoundary(existingSlotStart, durationMinutes, config)) {
+                    continue; // Try next time slot
+                }
+
+                // Check 2: Do any students in this course already have exams at this time?
+                List<ExamSession> sessionsAtThisTime = getSessionsAtTime(
+                    existingSlotStart, slotEnd, studentGapMinutes, new ArrayList<>()
+                );
+
+                if (courseHasStudentConflictWith(currentCourse, sessionsAtThisTime)) {
+                    continue; // Try next time slot
+                }
+
+                // Check 3: Does any student exceed max exams per day?
+                boolean studentExceedsMaxPerDay = false;
+                for (Student currentStudent : currentCourse.getStudents()) {
+                    int examsAlreadyOnThisDay = 0;
+                    for (TimeSlottedExam alreadyScheduled : timeSlottedExams) {
+                        if (alreadyScheduled.getStartTime().toLocalDate().equals(dayOfExam)) {
+                            boolean studentTakesThisCourse = alreadyScheduled.getCourse()
+                                .getStudents()
+                                .contains(currentStudent);
+                            if (studentTakesThisCourse) {
+                                examsAlreadyOnThisDay++;
+                            }
+                        }
+                    }
+
+                    if (examsAlreadyOnThisDay >= maxExamsPerDay) {
+                        studentExceedsMaxPerDay = true;
+                        break;
+                    }
+                }
+
+                if (studentExceedsMaxPerDay) {
+                    continue; // Try next time slot
+                }
+
+                // Check 4: Is there enough remaining capacity at this time slot?
+                int remainingCapacity = getRemainingCapacityAtTimeSlot(
+                    existingSlotStart, slotEnd, allRooms, roomTurnoverMinutes, timeSlottedExams
+                );
+
+                if (remainingCapacity < studentCount) {
+                    continue; // Not enough room, try next time slot
+                }
+
+                // SUCCESS: Schedule the exam at this existing time slot
+                TimeSlottedExam timeSlottedExam = new TimeSlottedExam(
+                    currentCourse,
+                    existingSlotStart,
+                    slotEnd,
+                    durationMinutes,
+                    studentCount
+                );
+
+                timeSlottedExams.add(timeSlottedExam);
+                System.out.println("✓ Phase 1 Bin-packed: " + currentCourse.getCourseName() +
+                    " at " + existingSlotStart.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+
+                hasBeenScheduled = true;
+            }
+
+            // STRATEGY 2: If bin-packing failed, try new time slots
+            if (!hasBeenScheduled) {
+                for (LocalDate examDay : examDays) {
+                    if (hasBeenScheduled) {
+                        break; // Already scheduled, move to next course
+                    }
+
+                    List<LocalDateTime> possibleStartTimes = generatePossibleStartTimes(examDay, config);
+
+                    for (LocalDateTime startTime : possibleStartTimes) {
+                        if (hasBeenScheduled) {
+                            break; // Already scheduled
+                        }
+
+                        LocalDateTime endTime = startTime.plusMinutes(durationMinutes);
+
+                        // Check 1: Would exam exceed day boundary?
+                        if (wouldExceedDayBoundary(startTime, durationMinutes, config)) {
+                            continue;
+                        }
+
+                        // Check 2: Does each student in this course have any conflicts?
+                        boolean hasStudentConflict = false;
+                        for (Student currentStudent : currentCourse.getStudents()) {
+                            // Check if student has overlapping exam with gap buffer
+                            if (studentHasConflictAt(currentStudent, startTime, endTime, studentGapMinutes, new ArrayList<>())) {
+                                hasStudentConflict = true;
+                                break;
+                            }
+
+                            // Check if student exceeds max exams per day
+                            int examsOnThisDay = 0;
+                            for (TimeSlottedExam alreadyScheduled : timeSlottedExams) {
+                                if (alreadyScheduled.getStartTime().toLocalDate().equals(examDay)) {
+                                    if (alreadyScheduled.getCourse().getStudents().contains(currentStudent)) {
+                                        examsOnThisDay++;
+                                    }
+                                }
+                            }
+                            if (examsOnThisDay >= maxExamsPerDay) {
+                                hasStudentConflict = true;
+                                break;
+                            }
+                        }
+
+                        if (hasStudentConflict) {
+                            continue;
+                        }
+
+                        // Check 3: Is there enough remaining capacity?
+                        int remainingCapacity = getRemainingCapacityAtTimeSlot(
+                            startTime, endTime, allRooms, roomTurnoverMinutes, timeSlottedExams
+                        );
+
+                        if (remainingCapacity < studentCount) {
+                            continue; // Not enough capacity
+                        }
+
+                        // SUCCESS: Create new time slot
+                        TimeSlottedExam timeSlottedExam = new TimeSlottedExam(
+                            currentCourse,
+                            startTime,
+                            endTime,
+                            durationMinutes,
+                            studentCount
+                        );
+
+                        timeSlottedExams.add(timeSlottedExam);
+                        usedTimeSlots.add(startTime); // Track this time slot for future bin-packing
+
+                        System.out.println("✓ Phase 1 Scheduled: " + currentCourse.getCourseName() +
+                            " at " + startTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+
+                        hasBeenScheduled = true;
+                    }
+                }
+            }
+
+            if (!hasBeenScheduled) {
+                System.out.println("✗ Phase 1 Failed: " + currentCourse.getCourseName() +
+                    " could not be time-slotted");
+            }
+        }
+
+        System.out.println("=== PHASE 1 COMPLETE: " + timeSlottedExams.size() + "/" +
+            sortedCourses.size() + " courses time-slotted ===\n");
+
+        return timeSlottedExams;
+    }
+
+    /* ===================== PHASE 2: CLASSROOM ASSIGNMENT ===================== */
+
+    /**
+     * Phase 2 of scheduling: Assigns specific classrooms to time-slotted exams.
+     * This method takes the time-slotted exams from Phase 1 and assigns them to
+     * specific classrooms using bin-packing for efficiency.
+     *
+     * @param timeSlottedExams exams with assigned time slots (from Phase 1)
+     * @param allRooms all available classrooms
+     * @param config scheduling configuration
+     * @param sessionIdStart starting ID for exam sessions
+     * @param partitionIdStart starting ID for partitions
+     * @param assignmentIdStart starting ID for student assignments
+     * @return map of dates to lists of scheduled exam sessions
+     */
+    private Map<LocalDate, List<ExamSession>> assignClassrooms(
+            List<TimeSlottedExam> timeSlottedExams,
+            List<Classroom> allRooms,
+            ExamConfig config,
+            int sessionIdStart,
+            int partitionIdStart,
+            int assignmentIdStart) {
+
+        System.out.println("\n=== PHASE 2: CLASSROOM ASSIGNMENT ===");
+
+        Map<LocalDate, List<ExamSession>> finalSchedule = new LinkedHashMap<>();
+        List<ExamSession> allExamSessions = new ArrayList<>();
+
+        int currentSessionId = sessionIdStart;
+        int currentPartitionId = partitionIdStart;
+        int currentAssignmentId = assignmentIdStart;
+
+        int roomTurnoverMinutes = config.getRoomTurnoverMinutes();
+
+        // Step 1: Group time-slotted exams by their time slot
+        Map<LocalDateTime, List<TimeSlottedExam>> examsByTimeSlot = new LinkedHashMap<>();
+
+        for (TimeSlottedExam timeSlottedExam : timeSlottedExams) {
+            LocalDateTime slotStart = timeSlottedExam.getStartTime();
+
+            // Add to the group for this time slot
+            examsByTimeSlot.computeIfAbsent(slotStart, k -> new ArrayList<>())
+                .add(timeSlottedExam);
+        }
+
+        // Step 2: For each time slot, assign classrooms to all exams at that time
+        for (Map.Entry<LocalDateTime, List<TimeSlottedExam>> slotEntry : examsByTimeSlot.entrySet()) {
+            LocalDateTime slotStart = slotEntry.getKey();
+            List<TimeSlottedExam> examsAtThisSlot = slotEntry.getValue();
+
+            // Find all rooms that are available during this entire time slot
+            List<Classroom> availableRoomsAtThisSlot = findAvailableRoomsForSlot(
+                slotStart,
+                slotStart.plusMinutes(60), // Estimate end time for finding available rooms
+                allRooms,
+                roomTurnoverMinutes,
+                allExamSessions
+            );
+
+            // Assign classrooms to each exam at this time slot using bin-packing
+            for (TimeSlottedExam currentExam : examsAtThisSlot) {
+                int studentsInThisCourse = currentExam.getStudentCount();
+                LocalDateTime examEnd = currentExam.getEndTime();
+
+                // Allocate rooms for this specific exam (removes them from available pool)
+                List<Classroom> allocatedRooms = allocateRoomsForExam(
+                    studentsInThisCourse,
+                    availableRoomsAtThisSlot
+                );
+
+                if (allocatedRooms == null) {
+                    // PHASE 2 FAILURE - This should not happen if Phase 1 capacity tracking is correct
+                    System.err.println("PHASE 2 FAILURE: Cannot assign rooms for " +
+                        currentExam.getCourse().getCourseName() +
+                        " - THIS INDICATES A BUG IN PHASE 1 CAPACITY TRACKING!");
+                    continue;
+                }
+
+                // Create the exam session with assigned rooms
+                ExamSession examSession = new ExamSession(
+                    currentSessionId++,
+                    slotStart,
+                    examEnd,
+                    currentExam.getDurationMinutes(),
+                    currentExam.getCourse()
+                );
+
+                // Add each allocated room as a partition in this exam session
+                int remainingStudents = studentsInThisCourse;
+                for (Classroom allocatedRoom : allocatedRooms) {
+                    int capacityToAssign = Math.min(allocatedRoom.getCapacity(), remainingStudents);
+
+                    ExamPartition partition = new ExamPartition(
+                        currentPartitionId++,
+                        capacityToAssign,
+                        allocatedRoom
+                    );
+
+                    examSession.addPartition(partition);
+                    remainingStudents -= capacityToAssign;
+                }
+
+                // Assign students to the partitions they'll sit in
+                currentAssignmentId = assignStudentsToPartitions(
+                    examSession,
+                    currentExam.getCourse().getStudents(),
+                    allocatedRooms,
+                    currentAssignmentId
+                );
+
+                // Add to the full schedule
+                allExamSessions.add(examSession);
+                LocalDate examDate = slotStart.toLocalDate();
+                finalSchedule.computeIfAbsent(examDate, k -> new ArrayList<>())
+                    .add(examSession);
+
+                // Update the course's exam sessions
+                currentExam.getCourse().getExamSessions().add(examSession);
+
+                System.out.println("✓ Phase 2 Assigned: " + currentExam.getCourse().getCourseName() +
+                    " in " + allocatedRooms.size() + " room(s)");
+            }
+        }
+
+        System.out.println("=== PHASE 2 COMPLETE: " + allExamSessions.size() +
+            " exams assigned to classrooms ===\n");
+
+        return finalSchedule;
+    }
+
+    /**
+     * Finds all classrooms that are available (not occupied) during a specific time window.
+     *
+     * @param startTime start of the time window
+     * @param endTime end of the time window
+     * @param allRooms all available classrooms
+     * @param roomTurnoverMinutes buffer time needed between exams
+     * @param allScheduledSessions all exams already scheduled
+     * @return list of available classrooms at this time
+     */
+    private List<Classroom> findAvailableRoomsForSlot(
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            List<Classroom> allRooms,
+            int roomTurnoverMinutes,
+            List<ExamSession> allScheduledSessions) {
+
+        List<Classroom> availableRooms = new ArrayList<>();
+        LocalDateTime endTimeWithTurnover = endTime.plusMinutes(roomTurnoverMinutes);
+
+        // Check each room to see if it's available
+        for (Classroom currentRoom : allRooms) {
+            boolean isRoomOccupied = false;
+
+            // Look through all scheduled exams to see if this room is in use
+            for (ExamSession scheduledSession : allScheduledSessions) {
+                for (ExamPartition partition : scheduledSession.getPartitions()) {
+                    if (partition.getClassroom().equals(currentRoom)) {
+                        // This room is used by the scheduled session
+                        // Check if the time windows overlap
+                        LocalDateTime sessionEndWithTurnover =
+                            scheduledSession.getEndTime().plusMinutes(roomTurnoverMinutes);
+
+                        if (!(endTimeWithTurnover.isBefore(scheduledSession.getStartTime()) ||
+                              sessionEndWithTurnover.isBefore(startTime))) {
+                            // Time windows overlap - room is occupied
+                            isRoomOccupied = true;
+                            break;
+                        }
+                    }
+                }
+                if (isRoomOccupied) break;
+            }
+
+            if (!isRoomOccupied) {
+                availableRooms.add(currentRoom);
+            }
+        }
+
+        // Sort rooms by capacity (largest first) for bin-packing efficiency
+        availableRooms.sort((roomA, roomB) ->
+            Integer.compare(roomB.getCapacity(), roomA.getCapacity())
+        );
+
+        return availableRooms;
+    }
+
+    /**
+     * Allocates classrooms for a single exam using bin-packing.
+     * Selects the minimum set of rooms (largest first) needed to accommodate all students.
+     * MODIFIES the input list by removing allocated rooms.
+     *
+     * @param studentCount number of students needing seats
+     * @param availableRooms list of available classrooms (will be modified)
+     * @return list of allocated rooms, or null if insufficient capacity
+     */
+    private List<Classroom> allocateRoomsForExam(
+            int studentCount,
+            List<Classroom> availableRooms) {
+
+        List<Classroom> allocatedRooms = new ArrayList<>();
+        int remainingStudents = studentCount;
+
+        // Bin-pack: take the largest available rooms first until all students fit
+        for (int i = 0; i < availableRooms.size() && remainingStudents > 0; i++) {
+            Classroom currentRoom = availableRooms.get(i);
+            allocatedRooms.add(currentRoom);
+            remainingStudents -= currentRoom.getCapacity();
+        }
+
+        // Remove allocated rooms from the available pool
+        availableRooms.removeAll(allocatedRooms);
+
+        // Check if we have enough capacity for all students
+        if (remainingStudents > 0) {
+            return null; // Not enough capacity
+        }
+
+        return allocatedRooms;
+    }
+
     /* ===================== MAIN ===================== */
 
     public ScheduleResult generateSchedule(
@@ -208,294 +633,28 @@ public class Scheduler {
         List<LocalDate> examDays = buildDateRange(startDate, endDate);
         if (examDays.isEmpty()) return new ScheduleResult(new LinkedHashMap<>(), new ArrayList<>());
 
-        int maxExamsPerDay = config.getMaxExamsPerDay();
-        int roomTurnoverMinutes = config.getRoomTurnoverMinutes();
-        int studentGapMinutes = config.getStudentMinGapMinutes();
-
         List<Course> sortedCourses = sortByEnrollment(courses);
-        List<Course> unscheduledCourses = new ArrayList<>();
 
-        Map<LocalDate, List<ExamSession>> result = new LinkedHashMap<>();
-        List<ExamSession> allScheduledSessions = new ArrayList<>();
+        // PHASE 1: Time Slot Assignment
+        List<TimeSlottedExam> timeSlottedExams = assignTimeSlots(
+            sortedCourses, classrooms, examDays, config
+        );
 
-        int sessionId = 1;
-        int partitionId = 1;
-        int assignmentId = 1;
+        // PHASE 2: Classroom Assignment
+        Map<LocalDate, List<ExamSession>> result = assignClassrooms(
+            timeSlottedExams, classrooms, config, 1, 1, 1
+        );
 
-        // Track unique time slots that have been used (for bin-packing)
-        Set<LocalDateTime> usedTimeSlots = new LinkedHashSet<>();
-
-        // Try to schedule each course
-        for (Course course : sortedCourses) {
-            boolean placed = false;
-            int studentCount = course.getStudents().size();
-            int duration = course.getDurationMinutes();
-
-            // FIRST: Try to pack into existing time slots (bin-packing priority)
-            for (LocalDateTime existingStart : usedTimeSlots) {
-                if (placed) break;
-
-                LocalDate day = existingStart.toLocalDate();
-                LocalDateTime endTime = existingStart.plusMinutes(duration);
-
-                // Check if exam would exceed day boundary
-                if (wouldExceedDayBoundary(existingStart, duration, config)) {
-                    continue;
-                }
-
-                // Get sessions already at this time slot (use student gap to check for student conflicts)
-                List<ExamSession> sessionsAtTime = getSessionsAtTime(existingStart, endTime, studentGapMinutes, allScheduledSessions);
-
-                // Check if course has student conflict with any session at this time
-                if (courseHasStudentConflictWith(course, sessionsAtTime)) {
-                    continue;
-                }
-
-                // Check student constraints
-                boolean canSchedule = true;
-                for (Student student : course.getStudents()) {
-                    if (getStudentExamsOnDay(student, day, allScheduledSessions) >= maxExamsPerDay) {
-                        canSchedule = false;
-                        break;
-                    }
-                }
-
-                if (!canSchedule) continue;
-
-                // Try to assign rooms (use room turnover for room availability)
-                List<Classroom> assignedRooms = findAvailableRooms(
-                    existingStart, endTime, studentCount, classrooms, roomTurnoverMinutes, allScheduledSessions
-                );
-
-                if (assignedRooms == null) {
-                    continue; // Not enough room capacity at this time
-                }
-
-                // Create the exam session
-                ExamSession session = new ExamSession(
-                    sessionId++,
-                    existingStart,
-                    endTime,
-                    duration,
-                    course
-                );
-
-                // Add room partitions
-                int remaining = studentCount;
-                for (Classroom room : assignedRooms) {
-                    int capacity = Math.min(room.getCapacity(), remaining);
-                    session.addPartition(new ExamPartition(partitionId++, capacity, room));
-                    remaining -= capacity;
-                }
-
-                // Assign students to partitions
-                assignmentId = assignStudentsToPartitions(session, course.getStudents(), assignedRooms, assignmentId);
-
-                // Validate partitions were added
-                if (session.getPartitions().isEmpty()) {
-                    System.out.println("ERROR: Session for " + course.getCourseName() + " has no partitions after creation!");
-                }
-
-                // Add to schedule
-                allScheduledSessions.add(session);
-                result.computeIfAbsent(day, k -> new ArrayList<>()).add(session);
-                course.getExamSessions().add(session);
-
-                System.out.println("Bin-packed: " + course.getCourseName() + " at " +
-                    existingStart.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) +
-                    " in " + assignedRooms.stream().map(Classroom::getName).reduce((a, b) -> a + ", " + b).orElse("N/A") +
-                    " (partitions: " + session.getPartitions().size() + ")");
-
-                placed = true;
-            }
-
-            // SECOND: If bin-packing failed, try new time slots
-            if (!placed) {
-                for (LocalDate day : examDays) {
-                    if (placed) break;
-
-                    // Generate possible start times for this day
-                    List<LocalDateTime> possibleStarts = generatePossibleStartTimes(day, config);
-
-                    // Try each possible start time
-                    for (LocalDateTime startTime : possibleStarts) {
-                        if (placed) break;
-
-                        LocalDateTime endTime = startTime.plusMinutes(duration);
-
-                        // Check if exam would exceed day boundary
-                        if (wouldExceedDayBoundary(startTime, duration, config)) {
-                            continue;
-                        }
-
-                        boolean canSchedule = true;
-
-                        // Check constraints for each student in this course
-                        for (Student student : course.getStudents()) {
-                            // Check if student has time conflict (use student gap)
-                            if (studentHasConflictAt(student, startTime, endTime, studentGapMinutes, allScheduledSessions)) {
-                                canSchedule = false;
-                                break;
-                            }
-
-                            // Check if student exceeds max exams per day
-                            if (getStudentExamsOnDay(student, day, allScheduledSessions) >= maxExamsPerDay) {
-                                canSchedule = false;
-                                break;
-                            }
-                        }
-
-                        if (!canSchedule) continue;
-
-                        // Try to assign rooms (use room turnover)
-                        List<Classroom> assignedRooms = findAvailableRooms(
-                            startTime, endTime, studentCount, classrooms, roomTurnoverMinutes, allScheduledSessions
-                        );
-
-                        if (assignedRooms == null) {
-                            continue; // Not enough capacity
-                        }
-
-                        // Create the exam session
-                        ExamSession session = new ExamSession(
-                            sessionId++,
-                            startTime,
-                            endTime,
-                            duration,
-                            course
-                        );
-
-                        // Add room partitions
-                        int remaining = studentCount;
-                        for (Classroom room : assignedRooms) {
-                            int capacity = Math.min(room.getCapacity(), remaining);
-                            session.addPartition(new ExamPartition(partitionId++, capacity, room));
-                            remaining -= capacity;
-                        }
-
-                        // Assign students to partitions
-                        assignmentId = assignStudentsToPartitions(session, course.getStudents(), assignedRooms, assignmentId);
-
-                        // Validate partitions were added
-                        if (session.getPartitions().isEmpty()) {
-                            System.out.println("ERROR: Session for " + course.getCourseName() + " has no partitions after creation!");
-                        }
-
-                        // Add to schedule
-                        allScheduledSessions.add(session);
-                        result.computeIfAbsent(day, k -> new ArrayList<>()).add(session);
-                        course.getExamSessions().add(session);
-
-                        // Track this time slot for future bin-packing
-                        usedTimeSlots.add(startTime);
-
-                        System.out.println("Scheduled: " + course.getCourseName() + " at " +
-                            startTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) +
-                            " in " + assignedRooms.stream().map(Classroom::getName).reduce((a, b) -> a + ", " + b).orElse("N/A") +
-                            " (partitions: " + session.getPartitions().size() + ")");
-
-                        placed = true;
-                    }
-                }
-            }
-
-            if (!placed) {
-                unscheduledCourses.add(course);
-                System.out.println("WARNING: Could not schedule " + course.getCourseName());
-            }
+        // Track unscheduled courses (those that Phase 1 could not time-slot)
+        Set<Course> scheduledCourses = new HashSet<>();
+        for (TimeSlottedExam timeSlottedExam : timeSlottedExams) {
+            scheduledCourses.add(timeSlottedExam.getCourse());
         }
 
-        // SECOND PASS: Pack unscheduled courses into existing time slots (bin-packing optimization)
-        System.out.println("\n=== Second Pass: Bin-Packing Unscheduled Courses ===");
-        List<Course> stillUnscheduled = new ArrayList<>(unscheduledCourses);
-        unscheduledCourses.clear();
-
-        for (Course course : stillUnscheduled) {
-            boolean packed = false;
-            int studentCount = course.getStudents().size();
-            int duration = course.getDurationMinutes();
-
-            // Try to find an existing time slot where this course fits
-            for (LocalDate day : examDays) {
-                if (packed) break;
-
-                List<LocalDateTime> possibleStarts = generatePossibleStartTimes(day, config);
-
-                for (LocalDateTime startTime : possibleStarts) {
-                    if (packed) break;
-
-                    LocalDateTime endTime = startTime.plusMinutes(duration);
-
-                    // Check if exam would exceed day boundary
-                    if (wouldExceedDayBoundary(startTime, duration, config)) {
-                        continue;
-                    }
-
-                    // Get all sessions at this time slot (use student gap for conflict check)
-                    List<ExamSession> sessionsAtTime = getSessionsAtTime(startTime, endTime, studentGapMinutes, allScheduledSessions);
-
-                    // Check if course has student conflict with any session at this time
-                    if (courseHasStudentConflictWith(course, sessionsAtTime)) {
-                        continue;
-                    }
-
-                    // Check student constraints
-                    boolean canSchedule = true;
-                    for (Student student : course.getStudents()) {
-                        // Check if student exceeds max exams per day (now includes new session)
-                        int examsOnDay = getStudentExamsOnDay(student, day, allScheduledSessions);
-                        if (examsOnDay >= maxExamsPerDay) {
-                            canSchedule = false;
-                            break;
-                        }
-                    }
-
-                    if (!canSchedule) continue;
-
-                    // Try to assign rooms (use room turnover)
-                    List<Classroom> assignedRooms = findAvailableRooms(
-                        startTime, endTime, studentCount, classrooms, roomTurnoverMinutes, allScheduledSessions
-                    );
-
-                    if (assignedRooms == null) {
-                        continue; // Not enough capacity
-                    }
-
-                    // Create the exam session
-                    ExamSession session = new ExamSession(
-                        sessionId++,
-                        startTime,
-                        endTime,
-                        duration,
-                        course
-                    );
-
-                    // Add room partitions
-                    int remaining = studentCount;
-                    for (Classroom room : assignedRooms) {
-                        int capacity = Math.min(room.getCapacity(), remaining);
-                        session.addPartition(new ExamPartition(partitionId++, capacity, room));
-                        remaining -= capacity;
-                    }
-
-                    // Assign students to partitions
-                    assignmentId = assignStudentsToPartitions(session, course.getStudents(), assignedRooms, assignmentId);
-
-                    // Add to schedule
-                    allScheduledSessions.add(session);
-                    result.computeIfAbsent(day, k -> new ArrayList<>()).add(session);
-                    course.getExamSessions().add(session);
-
-                    System.out.println("✓ Packed " + course.getCourseName() + " at " + startTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) +
-                        " (bin-packed with other courses at this time)");
-
-                    packed = true;
-                }
-            }
-
-            if (!packed) {
+        List<Course> unscheduledCourses = new ArrayList<>();
+        for (Course course : sortedCourses) {
+            if (!scheduledCourses.contains(course)) {
                 unscheduledCourses.add(course);
-                System.out.println("✗ Still unscheduled: " + course.getCourseName());
             }
         }
 
