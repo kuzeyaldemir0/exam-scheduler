@@ -305,7 +305,7 @@ public class SchedulingController {
         Tooltip extendTip = new Tooltip(
             "These courses could not fit in the current schedule.\n\n" +
             "Try extending the date range to provide more exam slots,\n" +
-            "or reducing the number of exams per day in Filter Settings."
+            "or increasing the number of exams per day in Filter Settings."
         );
         Tooltip.install(unscheduledList, extendTip);
 

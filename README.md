@@ -6,7 +6,10 @@ A desktop application for generating conflict-free exam timetables with automati
 
 ### Implemented
 - **CSV Import**: Students, courses, classrooms, enrollments
-- **Greedy Scheduling Algorithm**: Largest courses first
+- **Two-Phase Scheduling Architecture**:
+  - **Phase 1**: Time slot assignment (student-centric, conflict-aware)
+  - **Phase 2**: Classroom assignment (resource-aware, bin-packing)
+- **Smart Conflict Resolution**: Most constrained courses scheduled first
 - **Constraint Checking**:
   - No student conflicts (overlapping exams)
   - Max 2 exams per day per student
@@ -14,12 +17,15 @@ A desktop application for generating conflict-free exam timetables with automati
   - 15-minute room turnover time between exams
 - **Classroom Assignment**: Automatic bin-packing by capacity
 - **Room Splitting**: Large courses split across multiple classrooms
+- **Concurrent Exams**: Multiple exams can share time slots (different rooms, no student overlap)
+- **Precise Capacity Tracking**: Phase 2 failures prevented by accurate Phase 1 capacity estimation
 - **Calendar View**: Visual grid showing scheduled exams
 - **Student Schedule View**: Filter exams by student ID
 - **Classroom Schedule View**: Filter exams by room
 - **User Configuration**: Date range selection, max exams per day
 - **Help Dialog**: In-app guide explaining the workflow
 - **Comprehensive Testing**: Stress tests up to 10,000 students, 500 courses
+- **Demo Datasets**: Example CSVs showing multi-room splitting and concurrent scheduling
 
 ### Pending
 - PDF/CSV export
@@ -60,19 +66,66 @@ examschd/app/src/main/java/examschd/
     └── DBInitializer.java          # Schema creation
 ```
 
-## Algorithm
+## Architecture
 
-**Greedy with Constraint Propagation**
+### Two-Phase Scheduling Approach
 
-1. Sort courses by enrollment (largest first)
-2. For each course, try day/time combinations:
-   - Check: No student has overlapping exam (with 90-min gap requirement)
-   - Check: No student exceeds max exams/day
-   - Check: Sufficient classroom capacity available (with 15-min turnover)
-3. Assign classrooms using bin-packing (largest rooms first)
-4. Split across multiple rooms if needed
+The scheduler separates the problem into two distinct phases for clarity, modularity, and robustness:
 
-**Time Complexity**: O(courses × days × time_windows × students)
+#### Phase 1: Time Slot Assignment
+- **Goal**: Assign time slots to all courses
+- **Heuristic**: "Most Constrained Variable First" (courses with most student conflicts scheduled first)
+- **Constraints Checked**:
+  - No student has overlapping exams (with 90-min gap requirement)
+  - No student exceeds max exams/day
+  - Sufficient total classroom capacity available
+- **Optimization**: Bin-packing (tries to reuse existing time slots before creating new ones)
+- **Output**: List of courses with assigned time slots (no specific rooms yet)
+
+#### Phase 2: Classroom Assignment
+- **Goal**: Assign specific classrooms to time-slotted courses
+- **Input**: Time-slotted courses from Phase 1
+- **Approach**: Groups courses by time slot, allocates rooms using bin-packing
+- **Features**:
+  - Multiple exams can share a time slot (if no student overlap)
+  - Large courses automatically split across multiple classrooms
+  - Largest rooms assigned first (bin-packing efficiency)
+- **Output**: Final schedule with exam sessions and classroom assignments
+
+### Algorithm Details
+
+**Phase 1: Conflict-Based Sorting (Most Constrained Variable First)**
+
+1. **Calculate conflict score** for each course:
+   - Count how many OTHER courses share students with this course
+   - Example: If CourseA has students enrolled in 8 other courses, conflict score = 8
+   - Higher score = more constrained (harder to schedule) = schedule first
+
+2. **Sort courses** by conflict score (descending - most conflicts first)
+   - This is the "Most Constrained Variable First" heuristic from constraint satisfaction
+   - Scheduling hard courses first leaves more flexibility for easier courses
+
+3. **For each course**, try bin-packing into existing time slots, then new time slots:
+   - Verify no student has overlapping exam with 90-min buffer
+   - Verify no student exceeds max exams/day
+   - Verify sufficient remaining capacity at this time slot
+
+4. **Track result**: If successful, mark as time-slotted; otherwise mark as unscheduled
+
+**Phase 2: Bin-Packed Room Allocation**
+
+1. Group all time-slotted courses by their assigned time slot
+2. For each time slot, find all available rooms
+3. For each course at that time slot:
+   - Allocate necessary rooms using bin-packing (largest rooms first)
+   - Remove allocated rooms from the available pool
+   - Create exam partitions and assign students to seats
+4. Return final schedule with specific classroom assignments
+
+**Time Complexity**:
+- Phase 1: O(courses² × days × time_windows × students)
+- Phase 2: O(courses × classrooms)
+- Overall: O(courses² × days × time_windows × students)
 
 ### Partial Scheduling & Success Rates
 
@@ -156,6 +209,10 @@ CourseCode_01
 CourseCode_02
 ['Std_ID_003', 'Std_ID_004', ...]
 ```
+
+## Demo Datasets
+
+Sample CSV files are provided in `app/src/test/resources/csv/` for testing and demonstration. Use these to explore the scheduling algorithm's features.
 
 ## Running
 

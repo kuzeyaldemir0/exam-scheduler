@@ -60,7 +60,7 @@ class SchedulerTest {
 
         // Verify all courses scheduled
         int totalScheduled = result.values().stream().mapToInt(List::size).sum();
-        assertEquals(25, totalScheduled, "All 25 courses should be scheduled");
+        assertEquals(courses.size(), totalScheduled, "All " + courses.size() + " courses should be scheduled");
 
         // Verify each session has classroom partitions
         for (List<ExamSession> sessions : result.values()) {

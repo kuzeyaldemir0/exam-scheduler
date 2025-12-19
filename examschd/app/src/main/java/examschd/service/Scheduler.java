@@ -84,10 +84,59 @@ public class Scheduler {
         return result;
     }
 
-    private List<Course> sortByEnrollment(List<Course> courses) {
+    /**
+     * Calculates the conflict score for a course.
+     * The conflict score is the number of OTHER courses that share students with this course.
+     * Higher conflict score = harder to schedule (more constrained).
+     *
+     * @param course the course to analyze
+     * @param allCourses all courses in the system
+     * @return the number of courses that have overlapping students
+     */
+    private int calculateConflictScore(Course course, List<Course> allCourses) {
+        int conflictingCoursesCount = 0;
+
+        for (Course otherCourse : allCourses) {
+            // Skip comparing course with itself
+            if (otherCourse.equals(course)) {
+                continue;
+            }
+
+            // Check if this course and otherCourse share any students
+            boolean hasSharedStudents = false;
+            for (Student student : course.getStudents()) {
+                if (otherCourse.getStudents().contains(student)) {
+                    hasSharedStudents = true;
+                    break;
+                }
+            }
+
+            if (hasSharedStudents) {
+                conflictingCoursesCount++;
+            }
+        }
+
+        return conflictingCoursesCount;
+    }
+
+    /**
+     * Sorts courses by their conflict score in descending order (most constrained first).
+     * This is the "Most Constrained Variable First" heuristic from constraint satisfaction.
+     * Courses with more conflicts are scheduled first, leaving more flexible courses for later.
+     *
+     * @param courses the courses to sort
+     * @return courses sorted by conflict score (descending)
+     */
+    private List<Course> sortByConflicts(List<Course> courses) {
         List<Course> sorted = new ArrayList<>(courses);
-        sorted.sort((a, b) ->
-                Integer.compare(b.getStudents().size(), a.getStudents().size()));
+
+        // Sort by conflict score descending (most conflicts first)
+        sorted.sort((courseA, courseB) -> {
+            int conflictA = calculateConflictScore(courseA, courses);
+            int conflictB = calculateConflictScore(courseB, courses);
+            return Integer.compare(conflictB, conflictA);
+        });
+
         return sorted;
     }
 
@@ -633,7 +682,8 @@ public class Scheduler {
         List<LocalDate> examDays = buildDateRange(startDate, endDate);
         if (examDays.isEmpty()) return new ScheduleResult(new LinkedHashMap<>(), new ArrayList<>());
 
-        List<Course> sortedCourses = sortByEnrollment(courses);
+        // Sort courses by conflict score (most constrained first) for better scheduling
+        List<Course> sortedCourses = sortByConflicts(courses);
 
         // PHASE 1: Time Slot Assignment
         List<TimeSlottedExam> timeSlottedExams = assignTimeSlots(
