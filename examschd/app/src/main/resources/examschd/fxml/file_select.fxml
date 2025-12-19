@@ -18,6 +18,24 @@
                styleClass="title"
                alignment="CENTER" />
 
+        <!-- Database status info box -->
+        <VBox fx:id="dbStatusBox"
+              spacing="8"
+              alignment="CENTER"
+              visible="false"
+              styleClass="info-box"
+              prefWidth="550">
+
+            <Label text="✓ Previously imported data detected:"
+                   styleClass="info-title"/>
+            <VBox spacing="3" alignment="CENTER">
+                <Label fx:id="dbStudentsLabel" text="" styleClass="info-text"/>
+                <Label fx:id="dbCoursesLabel" text="" styleClass="info-text"/>
+                <Label fx:id="dbClassroomsLabel" text="" styleClass="info-text"/>
+                <Label fx:id="dbEnrollmentsLabel" text="" styleClass="info-text"/>
+            </VBox>
+        </VBox>
+
         <VBox spacing="22" alignment="CENTER">
 
             <HBox spacing="20" alignment="CENTER" prefWidth="500">
