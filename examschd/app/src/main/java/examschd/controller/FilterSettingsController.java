@@ -2,11 +2,19 @@ package examschd.controller;
 
 import examschd.model.Course;
 import examschd.model.ExamConfig;
+import javafx.animation.Interpolator;
+import javafx.animation.Transition;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.util.*;
 
@@ -20,6 +28,7 @@ public class FilterSettingsController {
     @FXML private Spinner<Integer> roomTurnoverSpinner;
     @FXML private Spinner<Integer> studentGapSpinner;
     @FXML private Spinner<Integer> examStartHourSpinner;
+    @FXML private Button gotItBtn;
     @FXML private Spinner<Integer> examEndHourSpinner;
 
     // 🔹 HELP OVERLAY
@@ -46,6 +55,9 @@ public class FilterSettingsController {
         if (helpOverlay != null) {
             helpOverlay.setVisible(false);
             helpOverlay.setManaged(false);
+        }
+        if (gotItBtn != null) {
+            addGotItHoverColorAnimation();
         }
     }
 
@@ -178,4 +190,47 @@ public class FilterSettingsController {
         Stage st = (Stage) courseDurationList.getScene().getWindow();
         st.close();
     }
+
+    private void addGotItHoverColorAnimation() {
+
+        Color normal = Color.web("#1976D2");
+        Color hover  = Color.web("#125AA0"); // basılmış gibi
+
+        Duration dur = Duration.millis(140);
+
+        gotItBtn.setBackground(
+            new Background(new BackgroundFill(
+                normal, new CornerRadii(10), Insets.EMPTY
+            ))
+        );
+
+        gotItBtn.setOnMouseEntered(e -> animateBgColor(gotItBtn, normal, hover, dur));
+        gotItBtn.setOnMouseExited(e -> animateBgColor(gotItBtn, hover, normal, dur));
+    }
+
+    private void animateBgColor(Button btn, Color from, Color to, Duration dur) {
+
+        final long start = System.currentTimeMillis();
+
+            Transition t = new Transition() {
+                {
+                    setCycleDuration(dur);
+                    setInterpolator(Interpolator.EASE_BOTH);
+                }
+
+                @Override
+                protected void interpolate(double frac) {
+                    Color c = from.interpolate(to, frac);
+                    btn.setBackground(
+                        new Background(new BackgroundFill(
+                            c, new CornerRadii(10), Insets.EMPTY
+                        ))
+                    );
+                }
+            };
+
+            t.play();
+    }
+
+
 }

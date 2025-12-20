@@ -196,20 +196,21 @@
 
             <Separator/>
 
-            <Label text="ℹ Tips" style="-fx-font-weight:bold;"/>
-            <Label text="• Filters are optional\n• Hover exams to see details\n• Unscheduled courses appear below the calendar"
+            <Label text="Tips" style="-fx-font-weight:bold;"/>
+            <Label text="• Filters are optional.&#10;• Unscheduled courses are displayed if any conflicts occur."
                    wrapText="true"
                    style="-fx-text-fill:#555;"/>
 
-            <Button text="Got it"
-                    onAction="#closeHelp"
-                    style="
-                        -fx-background-color:#1976D2;
-                        -fx-text-fill:white;
-                        -fx-font-weight:bold;
-                        -fx-background-radius:10;
-                        -fx-padding:10 22;
-                    "/>
+            <Button fx:id="gotItBtn"
+                text="Got it"
+                onAction="#closeHelp"
+                style="
+                    -fx-background-color:#1976D2;
+                    -fx-text-fill:white;
+                    -fx-font-weight:bold;
+                    -fx-background-radius:10;
+                    -fx-padding:10 22;
+                "/>
         </VBox>
     </VBox>
 

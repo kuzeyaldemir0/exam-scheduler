@@ -161,20 +161,21 @@
 
                 <Separator/>
 
-                <Label text="ℹ Tips" style="-fx-font-weight:bold;"/>
-                <Label text="• All files must be CSV\n• Select all files before continuing"
+                <Label text="Tips" style="-fx-font-weight:bold;"/>
+                <Label text="• All files must be CSV&#10;• Select all files before continuing or use the close button above"
                        wrapText="true"
                        style="-fx-text-fill:#555;"/>
 
-                <Button text="Got it"
-                        onAction="#closeHelp"
-                        style="
-                            -fx-background-color:#1976D2;
-                            -fx-text-fill:white;
-                            -fx-font-weight:bold;
-                            -fx-background-radius:10;
-                            -fx-padding:10 22;
-                        "/>
+                <Button fx:id="gotItBtn"
+                    text="Got it"
+                    onAction="#closeHelp"
+                    style="
+                        -fx-background-color:#1976D2;
+                        -fx-text-fill:white;
+                        -fx-font-weight:bold;
+                        -fx-background-radius:10;
+                        -fx-padding:10 22;
+                    "/>
 
             </VBox>
         </content>

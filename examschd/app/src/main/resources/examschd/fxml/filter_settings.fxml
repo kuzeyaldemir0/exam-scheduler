@@ -138,15 +138,16 @@
             <Label text="Defines the daily time window when exams can be scheduled."
                    wrapText="true"/>
 
-            <Button text="Got it"
-                    onAction="#closeHelp"
-                    style="
-                        -fx-background-color:#1976D2;
-                        -fx-text-fill:white;
-                        -fx-font-weight:bold;
-                        -fx-background-radius:10;
-                        -fx-padding:10 22;
-                    "/>
+            <Button fx:id="gotItBtn"
+        text="Got it"
+        onAction="#closeHelp"
+        style="
+            -fx-background-color:#1976D2;
+            -fx-text-fill:white;
+            -fx-font-weight:bold;
+            -fx-background-radius:10;
+            -fx-padding:10 22;
+        "/>
         </VBox>
     </VBox>
 

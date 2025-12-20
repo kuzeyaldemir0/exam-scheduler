@@ -1,11 +1,20 @@
 package examschd.controller;
 
+import javafx.animation.Interpolator;
+import javafx.animation.Transition;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 import java.io.File;
 
@@ -21,6 +30,7 @@ public class FileSelectController {
     @FXML private Label warningLabel;
     @FXML private HBox warningBox;
     @FXML private javafx.scene.layout.VBox helpOverlay;
+    @FXML private javafx.scene.control.Button gotItBtn;
 
     private File classroomsFile;
     private File coursesFile;
@@ -29,8 +39,57 @@ public class FileSelectController {
 
     // Initialize database
     public void initialize() {
-        DBInitializer.initialize(); 
+        DBInitializer.initialize();
+
+        if (gotItBtn != null) {
+            addPressedLikeHover(gotItBtn);
+        }
     }
+
+    private void addPressedLikeHover(Button btn) {
+
+        Color normal = Color.web("#1976D2");
+        Color hover  = Color.web("#125AA0");
+        Duration dur = Duration.millis(140);
+
+        btn.setBackground(
+            new Background(new BackgroundFill(
+                normal, new CornerRadii(10), Insets.EMPTY
+            ))
+        );
+
+        btn.setOnMouseEntered(e ->
+            animateBgColor(btn, normal, hover, dur)
+        );
+
+        btn.setOnMouseExited(e ->
+            animateBgColor(btn, hover, normal, dur)
+        );
+    }
+
+    private void animateBgColor(Button btn, Color from, Color to, Duration dur) {
+
+        Transition t = new Transition() {
+            {
+                setCycleDuration(dur);
+                setInterpolator(Interpolator.EASE_BOTH);
+            }
+
+            @Override
+            protected void interpolate(double frac) {
+                Color c = from.interpolate(to, frac);
+                btn.setBackground(
+                    new Background(new BackgroundFill(
+                        c, new CornerRadii(10), Insets.EMPTY
+                    ))
+                );
+            }
+        };
+
+        t.play();
+    }
+
+
 
     public boolean hasAllFilesSelected() {
         return classroomsFile != null &&

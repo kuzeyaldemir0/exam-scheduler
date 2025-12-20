@@ -13,6 +13,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.beans.property.BooleanProperty;
@@ -22,6 +23,11 @@ import java.io.File;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
+
+import javafx.animation.Interpolator;
+import javafx.animation.ScaleTransition;
+import javafx.animation.Transition;
+import javafx.util.Duration;
 
 public class SchedulingController {
 
@@ -42,6 +48,7 @@ public class SchedulingController {
     @FXML private Button showClassroomBtn;
     @FXML private Button generateBtn;   
     @FXML private ScrollPane scheduleScroll;
+    @FXML private Button gotItBtn;
 
 
 
@@ -53,12 +60,14 @@ public class SchedulingController {
     private void showHelp() {
         helpOverlay.setVisible(true);
         helpOverlay.setManaged(true);
+        helpOverlay.setMouseTransparent(false);
     }
 
     @FXML
     private void closeHelp() {
         helpOverlay.setVisible(false);
         helpOverlay.setManaged(false);
+        helpOverlay.setMouseTransparent(true);
     }
 
 
@@ -91,13 +100,57 @@ public class SchedulingController {
         unscheduledSection.setVisible(false);
         unscheduledSection.setManaged(false);
 
+        helpOverlay.setMouseTransparent(true);
+
         // 🔒 Generate, Apply basılmadan aktif olmasın
         generateBtn.disableProperty().bind(
             startDatePicker.valueProperty().isNull()
                 .or(endDatePicker.valueProperty().isNull())
                 .or(dateRangeApplied.not())
         );
+        addGotItHoverColorAnimation();
     }
+
+    private void addGotItHoverColorAnimation() {
+
+        Color normal = Color.web("#1976D2");
+        Color hover  = Color.web("#125AA0"); // basılmış gibi
+
+        Duration dur = Duration.millis(140);
+
+        gotItBtn.setBackground(
+            new Background(new BackgroundFill(
+                normal, new CornerRadii(10), Insets.EMPTY
+            ))
+        );
+
+        gotItBtn.setOnMouseEntered(e -> animateBgColor(gotItBtn, normal, hover, dur));
+        gotItBtn.setOnMouseExited(e -> animateBgColor(gotItBtn, hover, normal, dur));
+    }
+    private void animateBgColor(Button btn, Color from, Color to, Duration dur) {
+
+        final long start = System.currentTimeMillis();
+
+            Transition t = new Transition() {
+                {
+                    setCycleDuration(dur);
+                    setInterpolator(Interpolator.EASE_BOTH);
+                }
+
+                @Override
+                protected void interpolate(double frac) {
+                    Color c = from.interpolate(to, frac);
+                    btn.setBackground(
+                        new Background(new BackgroundFill(
+                            c, new CornerRadii(10), Insets.EMPTY
+                        ))
+                    );
+                }
+            };
+
+            t.play();
+    }
+
 
 
     private void loadExistingDataOnStartup() {
