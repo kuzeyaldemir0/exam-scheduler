@@ -357,82 +357,104 @@ public class SchedulingController {
         }
     }
 
-    private void displayUnscheduledCourses(List<Course> unscheduledCourses) {
+    private void displayUnscheduledCourses(ScheduleResult result) {
+        List<Course> unscheduledCourses = result.getUnscheduledCourses();
+        Map<Course, SchedulingFailureReason> failureReasons = result.getFailureReasons();
 
-    unscheduledSection.getChildren().clear();
+        unscheduledSection.getChildren().clear();
 
-    // varsayılan
-    scheduleScroll.setVisible(true);
-    scheduleScroll.setManaged(true);
-    unscheduledSection.setVisible(false);
-    unscheduledSection.setManaged(false);
+        // varsayılan
+        scheduleScroll.setVisible(true);
+        scheduleScroll.setManaged(true);
+        unscheduledSection.setVisible(false);
+        unscheduledSection.setManaged(false);
 
-    // hata yoksa
-    if (unscheduledCourses == null || unscheduledCourses.isEmpty()) {
-        return;
-    }
+        // hata yoksa
+        if (unscheduledCourses == null || unscheduledCourses.isEmpty()) {
+            return;
+        }
 
-    // hata varsa → takvimi gizle
-    scheduleScroll.setVisible(false);
-    scheduleScroll.setManaged(false);
+        // hata varsa → takvimi gizle
+        scheduleScroll.setVisible(false);
+        scheduleScroll.setManaged(false);
 
-    unscheduledSection.setVisible(true);
-    unscheduledSection.setManaged(true);
+        unscheduledSection.setVisible(true);
+        unscheduledSection.setManaged(true);
 
-    unscheduledSection.setStyle(
-        "-fx-background-color:#FFEBEE;" +
-        "-fx-border-color:#EF9A9A;" +
-        "-fx-border-radius:10;" +
-        "-fx-background-radius:10;" +
-        "-fx-padding:16;"
-    );
-
-    Label title = new Label(
-        "⚠ Unscheduled Courses (" + unscheduledCourses.size() + ")"
-    );
-    title.setStyle(
-        "-fx-text-fill:#B71C1C;" +
-        "-fx-font-size:15;" +
-        "-fx-font-weight:bold;"
-    );
-
-    Label hint = new Label(
-        "The following courses could not be scheduled.\n" +
-        "Please adjust the date range or filter settings."
-    );
-    hint.setWrapText(true);
-    hint.setStyle("-fx-text-fill:#555;");
-
-    // 🔽 SCROLL EDİLECEK LİSTE
-    VBox listBox = new VBox(6);
-
-    for (Course course : unscheduledCourses) {
-        Label item = new Label(
-            "• " + course.getCourseName() +
-            " (" + course.getStudents().size() + " students)"
+        unscheduledSection.setStyle(
+            "-fx-background-color:#FFEBEE;" +
+            "-fx-border-color:#EF9A9A;" +
+            "-fx-border-radius:10;" +
+            "-fx-background-radius:10;" +
+            "-fx-padding:16;"
         );
-        item.setWrapText(true);
-        item.setStyle(
+
+        Label title = new Label(
+            "Unscheduled Courses (" + unscheduledCourses.size() + ")"
+        );
+        title.setStyle(
             "-fx-text-fill:#B71C1C;" +
-            "-fx-font-size:13;"
+            "-fx-font-size:15;" +
+            "-fx-font-weight:bold;"
         );
-        listBox.getChildren().add(item);
+
+        Label hint = new Label(
+            "The following courses could not be scheduled. " +
+            "See the reason and suggestion for each course below."
+        );
+        hint.setWrapText(true);
+        hint.setStyle("-fx-text-fill:#555;");
+
+        VBox listBox = new VBox(10);
+
+        for (Course course : unscheduledCourses) {
+            VBox courseBox = new VBox(4);
+            courseBox.setStyle(
+                "-fx-background-color:#FFFFFF;" +
+                "-fx-padding:10;" +
+                "-fx-border-color:#FFCDD2;" +
+                "-fx-border-radius:6;" +
+                "-fx-background-radius:6;"
+            );
+
+            Label courseName = new Label(
+                course.getCourseName() + " (" + course.getStudents().size() + " students)"
+            );
+            courseName.setStyle(
+                "-fx-text-fill:#B71C1C;" +
+                "-fx-font-size:13;" +
+                "-fx-font-weight:bold;"
+            );
+
+            SchedulingFailureReason reason = failureReasons.get(course);
+            String reasonText = reason != null ? reason.getDisplayMessage() : "Unknown reason";
+            String suggestionText = reason != null ? reason.getSuggestion() : "Try adjusting the settings";
+
+            Label reasonLabel = new Label("Reason: " + reasonText);
+            reasonLabel.setStyle("-fx-text-fill:#C62828; -fx-font-size:12;");
+
+            Label suggestionLabel = new Label("Suggestion: " + suggestionText);
+            suggestionLabel.setWrapText(true);
+            suggestionLabel.setStyle("-fx-text-fill:#1565C0; -fx-font-size:12;");
+
+            courseBox.getChildren().addAll(courseName, reasonLabel, suggestionLabel);
+            listBox.getChildren().add(courseBox);
+        }
+
+        ScrollPane scroll = new ScrollPane(listBox);
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(260);
+        scroll.setStyle(
+            "-fx-background-color:transparent;" +
+            "-fx-border-color:transparent;"
+        );
+
+        unscheduledSection.getChildren().addAll(
+            title,
+            hint,
+            scroll
+        );
     }
-
-    ScrollPane scroll = new ScrollPane(listBox);
-    scroll.setFitToWidth(true);
-    scroll.setPrefHeight(260);   // 🔥 kritik: alan sabit
-    scroll.setStyle(
-        "-fx-background-color:transparent;" +
-        "-fx-border-color:transparent;"
-    );
-
-    unscheduledSection.getChildren().addAll(
-        title,
-        hint,
-        scroll
-    );
-}
 
 
 
@@ -668,7 +690,7 @@ public class SchedulingController {
         );
 
         renderSchedule(preparedScheduleResult.getSchedule());
-        displayUnscheduledCourses(preparedScheduleResult.getUnscheduledCourses());
+        displayUnscheduledCourses(preparedScheduleResult);
     }
 
     private void openFiltersPopup() {
