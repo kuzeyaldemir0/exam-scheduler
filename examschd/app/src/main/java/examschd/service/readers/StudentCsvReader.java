@@ -3,12 +3,11 @@ package examschd.service.readers;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvValidationException;
+import examschd.model.Student;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-
-import examschd.model.Student;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,7 @@ public class StudentCsvReader  {
                 String value = line[0].trim();
 
                 // empty or irrelevant lines
-                if (value.isEmpty() || value.startsWith("ALL OF")) continue;
+                if (value.isEmpty() || value.toUpperCase().startsWith("ALL OF")) continue;
 
                 students.add(new Student(counter++, value));
             }

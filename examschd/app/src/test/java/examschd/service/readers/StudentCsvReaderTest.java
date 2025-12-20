@@ -128,4 +128,46 @@ class StudentCsvReaderTest {
         assertEquals("Mikael", students.get(1).getStudentName());
         assertEquals("Elijah", students.get(2).getStudentName());
     }
+
+    @Test
+    void testRead_WhitespaceOnlyLine_ShouldSkip() throws Exception {
+        String csv = """
+                Std_ID_001
+                   
+                Std_ID_002
+                """;
+
+        writeCsv(csv);
+
+        List<Student> list = StudentCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+        assertEquals("Std_ID_001", list.get(0).getStudentName());
+        assertEquals("Std_ID_002", list.get(1).getStudentName());
+    }
+
+    @Test
+    void testRead_FileNotFound() {
+        assertThrows(IOException.class,
+                () -> StudentCsvReader.read("non_existent_file.csv"));
+    }
+
+    @Test
+    void testRead_SpecialCharacters() throws Exception {
+        String csv = """
+                Student-A
+                Student_B.2
+                Student#C3
+                Student@123
+                """;
+
+        writeCsv(csv);
+
+        List<Student> list = StudentCsvReader.read(tempFile.toString());
+
+        assertEquals(4, list.size());
+        assertEquals("Student-A", list.get(0).getStudentName());
+        assertEquals("Student_B.2", list.get(1).getStudentName());
+        assertEquals("Student#C3", list.get(2).getStudentName());
+    }
 }

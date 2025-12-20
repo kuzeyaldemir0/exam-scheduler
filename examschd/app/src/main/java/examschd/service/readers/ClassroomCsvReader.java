@@ -23,7 +23,7 @@ public class ClassroomCsvReader {
                 new FileReader(filePath, StandardCharsets.UTF_8)
         ).withCSVParser(
                 new CSVParserBuilder()
-                        .withSeparator('\t') 
+                        .withSeparator('\t')
                         .build()
         ).build()) {
 
@@ -53,6 +53,7 @@ public class ClassroomCsvReader {
 
                 try {
                     capacity = Integer.parseInt(parts[1].trim());
+                    if (capacity <= 0) continue;
                 } catch (NumberFormatException e) {
                     continue;
                 }

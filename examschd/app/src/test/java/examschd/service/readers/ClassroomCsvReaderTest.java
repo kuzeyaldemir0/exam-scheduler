@@ -161,4 +161,123 @@ class ClassroomCsvReaderTest {
         assertTrue(list.isEmpty());
     }
 
+    @Test
+    void testRead_NegativeCapacity_ShouldSkip() throws Exception {
+        String csvContent = """
+            Room1;40
+            Room2;-10
+            Room3;50
+            """;
+        writeCsv(csvContent);
+
+        List<Classroom> list = ClassroomCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+        assertEquals("Room1", list.get(0).getName());
+        assertEquals("Room3", list.get(1).getName());
+    }
+
+    @Test
+    void testRead_ZeroCapacity_ShouldSkip() throws Exception {
+        String csvContent = """
+            Room1;40
+            Room2;0
+            Room3;50
+            """;
+        writeCsv(csvContent);
+
+        List<Classroom> list = ClassroomCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+    }
+
+    @Test
+    void testRead_VeryLargeCapacity() throws Exception {
+        String csvContent = """
+            SmallRoom;40
+            Auditorium;999999
+            """;
+        writeCsv(csvContent);
+
+        List<Classroom> list = ClassroomCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+        assertEquals(999999, list.get(1).getCapacity());
+    }
+
+    @Test
+    void testRead_DuplicateNames_BothIncluded() throws Exception {
+        String csvContent = """
+            Room1;40
+            Room1;50
+            """;
+        writeCsv(csvContent);
+
+        List<Classroom> list = ClassroomCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+        assertEquals(1, list.get(0).getClassroomId());
+        assertEquals(2, list.get(1).getClassroomId());
+    }
+
+    @Test
+    void testRead_ExtraColumns_ShouldIgnore() throws Exception {
+        String csvContent = """
+            Room1;40;ExtraData;MoreData
+            Room2;50;Something
+            """;
+        writeCsv(csvContent);
+
+        List<Classroom> list = ClassroomCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+        assertEquals("Room1", list.get(0).getName());
+        assertEquals(40, list.get(0).getCapacity());
+    }
+
+    @Test
+    void testRead_MissingCapacity_ShouldSkip() throws Exception {
+        String csvContent = """
+            Room1;40
+            OnlyName
+            Room2;50
+            """;
+        writeCsv(csvContent);
+
+        List<Classroom> list = ClassroomCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+    }
+
+    @Test
+    void testRead_DecimalCapacity_ShouldSkip() throws Exception {
+        String csvContent = """
+            Room1;40
+            Room2;50.5
+            Room3;60
+            """;
+        writeCsv(csvContent);
+
+        List<Classroom> list = ClassroomCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+        assertEquals("Room1", list.get(0).getName());
+        assertEquals("Room3", list.get(1).getName());
+    }
+
+    @Test
+    void testRead_ExtraWhitespaceAroundValues() throws Exception {
+        String csvContent = """
+            Room1  ;  40  
+            Room2;50
+            """;
+        writeCsv(csvContent);
+
+        List<Classroom> list = ClassroomCsvReader.read(tempFile.toString());
+
+        assertEquals(2, list.size());
+        assertEquals("Room1", list.get(0).getName());
+        assertEquals(40, list.get(0).getCapacity());
+    }
+
 }
