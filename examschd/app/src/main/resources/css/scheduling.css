@@ -109,10 +109,8 @@
 --------------------------------------------------------- */
 
 .schedule-table {
-    -fx-background-color: white;
-    -fx-border-color: #ddd;
-    -fx-border-width: 1;
-    -fx-background-radius: 10;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
 /* Day header label */

@@ -1,7 +1,6 @@
 package examschd.controller;
 
 import examschd.model.*;
-import examschd.model.StudentAssignment;
 import examschd.service.ImportService;
 import examschd.service.Scheduler;
 
@@ -9,6 +8,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -40,7 +40,27 @@ public class SchedulingController {
     @FXML private TextField classroomSearchField;
     @FXML private ComboBox<String> classroomCombo;
     @FXML private Button showClassroomBtn;
-    @FXML private Button generateBtn;
+    @FXML private Button generateBtn;   
+    @FXML private ScrollPane scheduleScroll;
+
+
+
+
+    @FXML
+    private VBox helpOverlay;
+
+    @FXML
+    private void showHelp() {
+        helpOverlay.setVisible(true);
+        helpOverlay.setManaged(true);
+    }
+
+    @FXML
+    private void closeHelp() {
+        helpOverlay.setVisible(false);
+        helpOverlay.setManaged(false);
+    }
+
 
 
     private List<Classroom> allClassrooms = new ArrayList<>();
@@ -67,6 +87,9 @@ public class SchedulingController {
     public void initialize() {
         setupListeners();
         loadExistingDataOnStartup();
+
+        unscheduledSection.setVisible(false);
+        unscheduledSection.setManaged(false);
 
         // 🔒 Generate, Apply basılmadan aktif olmasın
         generateBtn.disableProperty().bind(
@@ -123,9 +146,6 @@ public class SchedulingController {
         scheduleGrid.getRowConstraints().clear();
         dayColumnMap.clear();
 
-        RowConstraints row = new RowConstraints();
-        row.setVgrow(Priority.ALWAYS);
-        scheduleGrid.getRowConstraints().add(row);
 
         LocalDate d = start;
         int col = 0;
@@ -133,7 +153,7 @@ public class SchedulingController {
         while (!d.isAfter(end)) {
 
             ColumnConstraints cc = new ColumnConstraints();
-            cc.setMinWidth(220);
+            cc.setMinWidth(260);
             cc.setHgrow(Priority.ALWAYS);
             scheduleGrid.getColumnConstraints().add(cc);
 
@@ -142,13 +162,21 @@ public class SchedulingController {
             VBox.setVgrow(dayBox, Priority.ALWAYS);
 
             dayBox.setStyle(
-                "-fx-background-color:#F8F8F8;" +
-                "-fx-padding:10;" +
-                "-fx-background-radius:8;"
+                "-fx-background-color: white;" +
+                "-fx-padding:12;" +
+                "-fx-background-radius:12;" +
+                "-fx-border-color:#E0E0E0;" +
+                "-fx-border-radius:12;"
             );
 
-            Label header = new Label(d.toString());
-            header.setStyle("-fx-font-weight:bold; -fx-font-size:14;");
+
+            Label header = new Label(d.getDayOfWeek() + " • " + d);
+            header.setStyle(
+                "-fx-font-weight:bold;" +
+                "-fx-font-size:14;" +
+                "-fx-text-fill:#37474F;"
+            );
+
 
             dayBox.getChildren().add(header);
 
@@ -157,6 +185,13 @@ public class SchedulingController {
 
             d = d.plusDays(1);
         }
+        scheduleGrid.setHgap(24);
+        scheduleGrid.setVgap(16);
+
+        RowConstraints rc = new RowConstraints();
+        rc.setVgrow(Priority.ALWAYS);
+        scheduleGrid.getRowConstraints().add(rc);
+
     }
 
 
@@ -247,11 +282,14 @@ public class SchedulingController {
                 examLabel.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
 
                 examLabel.setStyle(
-                    "-fx-background-color:#E3F2FD;" +
+                    "-fx-background-color: linear-gradient(#E3F2FD, #BBDEFB);" +
                     "-fx-padding:10;" +
-                    "-fx-background-radius:6;" +
+                    "-fx-background-radius:10;" +
+                    "-fx-border-color:#90CAF9;" +
+                    "-fx-border-radius:10;" +
                     "-fx-font-size:12;"
                 );
+
 
                 Tooltip.install(
                     examLabel,
@@ -260,57 +298,91 @@ public class SchedulingController {
                         "\nDuration: " + session.getCourse().getDurationMinutes() + " min"
                     )
                 );
-
+                VBox.setMargin(examLabel, new Insets(4, 0, 0, 0));
                 dayBox.getChildren().add(examLabel);
             }
         }
     }
 
     private void displayUnscheduledCourses(List<Course> unscheduledCourses) {
-        unscheduledSection.getChildren().clear();
 
-        if (unscheduledCourses == null || unscheduledCourses.isEmpty()) {
-            Label success = new Label("All courses scheduled successfully!");
-            success.setStyle(
-                "-fx-text-fill: #2E7D32;" +
-                "-fx-font-size: 14;" +
-                "-fx-font-weight: bold;"
-            );
-            unscheduledSection.getChildren().add(success);
-            return;
-        }
+    unscheduledSection.getChildren().clear();
 
-        Label title = new Label("Unscheduled Courses (" + unscheduledCourses.size() + "):");
-        title.setStyle(
-            "-fx-text-fill: #C62828;" +
-            "-fx-font-size: 14;" +
-            "-fx-font-weight: bold;" +
-            "-fx-padding: 10 0 5 0;"
-        );
-        unscheduledSection.getChildren().add(title);
+    // varsayılan
+    scheduleScroll.setVisible(true);
+    scheduleScroll.setManaged(true);
+    unscheduledSection.setVisible(false);
+    unscheduledSection.setManaged(false);
 
-        TextArea unscheduledList = new TextArea();
-        unscheduledList.setEditable(false);
-        unscheduledList.setWrapText(true);
-        unscheduledList.setPrefRowCount(3);
-        unscheduledList.setMaxHeight(100);
-
-        StringBuilder text = new StringBuilder();
-        for (Course course : unscheduledCourses) {
-            text.append("- ").append(course.getCourseName())
-                .append(" (").append(course.getStudents().size()).append(" students)\n");
-        }
-        unscheduledList.setText(text.toString());
-
-        Tooltip extendTip = new Tooltip(
-            "These courses could not fit in the current schedule.\n\n" +
-            "Try extending the date range to provide more exam slots,\n" +
-            "or increasing the number of exams per day in Filter Settings."
-        );
-        Tooltip.install(unscheduledList, extendTip);
-
-        unscheduledSection.getChildren().add(unscheduledList);
+    // hata yoksa
+    if (unscheduledCourses == null || unscheduledCourses.isEmpty()) {
+        return;
     }
+
+    // hata varsa → takvimi gizle
+    scheduleScroll.setVisible(false);
+    scheduleScroll.setManaged(false);
+
+    unscheduledSection.setVisible(true);
+    unscheduledSection.setManaged(true);
+
+    unscheduledSection.setStyle(
+        "-fx-background-color:#FFEBEE;" +
+        "-fx-border-color:#EF9A9A;" +
+        "-fx-border-radius:10;" +
+        "-fx-background-radius:10;" +
+        "-fx-padding:16;"
+    );
+
+    Label title = new Label(
+        "⚠ Unscheduled Courses (" + unscheduledCourses.size() + ")"
+    );
+    title.setStyle(
+        "-fx-text-fill:#B71C1C;" +
+        "-fx-font-size:15;" +
+        "-fx-font-weight:bold;"
+    );
+
+    Label hint = new Label(
+        "The following courses could not be scheduled.\n" +
+        "Please adjust the date range or filter settings."
+    );
+    hint.setWrapText(true);
+    hint.setStyle("-fx-text-fill:#555;");
+
+    // 🔽 SCROLL EDİLECEK LİSTE
+    VBox listBox = new VBox(6);
+
+    for (Course course : unscheduledCourses) {
+        Label item = new Label(
+            "• " + course.getCourseName() +
+            " (" + course.getStudents().size() + " students)"
+        );
+        item.setWrapText(true);
+        item.setStyle(
+            "-fx-text-fill:#B71C1C;" +
+            "-fx-font-size:13;"
+        );
+        listBox.getChildren().add(item);
+    }
+
+    ScrollPane scroll = new ScrollPane(listBox);
+    scroll.setFitToWidth(true);
+    scroll.setPrefHeight(260);   // 🔥 kritik: alan sabit
+    scroll.setStyle(
+        "-fx-background-color:transparent;" +
+        "-fx-border-color:transparent;"
+    );
+
+    unscheduledSection.getChildren().addAll(
+        title,
+        hint,
+        scroll
+    );
+}
+
+
+
 
 
     public void initData(
@@ -363,37 +435,37 @@ public class SchedulingController {
         }
     }
 
-    @FXML
-    private void showHelp() {
-        Alert helpDialog = new Alert(Alert.AlertType.INFORMATION);
-        helpDialog.setTitle("How to Use Exam Scheduler");
-        helpDialog.setHeaderText("Getting Started Guide");
-        helpDialog.setContentText(
-            "1. IMPORT DATA\n" +
-            "   Click 'Import all data' to upload your CSV files:\n" +
-            "   • students.csv - List of student IDs\n" +
-            "   • courses.csv - List of course codes\n" +
-            "   • classrooms.csv - Room names and capacities\n" +
-            "   • enrollments.csv - Which students take which courses\n\n" +
-            "2. SET DATE RANGE\n" +
-            "   Select start and end dates for your exam period,\n" +
-            "   then click 'Apply Date Range' to confirm.\n\n" +
-            "3. CONFIGURE SETTINGS (Optional)\n" +
-            "   Click 'Filter Settings' to adjust:\n" +
-            "   • Max exams per student per day\n" +
-            "   • Room turnover time between exams\n" +
-            "   • Minimum gap between exams for students\n" +
-            "   • Exam duration per course\n\n" +
-            "4. GENERATE SCHEDULE\n" +
-            "   Click 'Generate Schedule' to create the timetable.\n" +
-            "   The calendar will show all scheduled exams.\n\n" +
-            "5. VIEW SCHEDULES\n" +
-            "   • Select a student ID to see their personal exam schedule\n" +
-            "   • Select a classroom to see exams in that room"
-        );
-        helpDialog.getDialogPane().setMinWidth(500);
-        helpDialog.showAndWait();
-    }
+    // @FXML
+    // private void showHelp() {
+    //     Alert helpDialog = new Alert(Alert.AlertType.INFORMATION);
+    //     helpDialog.setTitle("How to Use Exam Scheduler");
+    //     helpDialog.setHeaderText("Getting Started Guide");
+    //     helpDialog.setContentText(
+    //         "1. IMPORT DATA\n" +
+    //         "   Click 'Import all data' to upload your CSV files:\n" +
+    //         "   • students.csv - List of student IDs\n" +
+    //         "   • courses.csv - List of course codes\n" +
+    //         "   • classrooms.csv - Room names and capacities\n" +
+    //         "   • enrollments.csv - Which students take which courses\n\n" +
+    //         "2. SET DATE RANGE\n" +
+    //         "   Select start and end dates for your exam period,\n" +
+    //         "   then click 'Apply Date Range' to confirm.\n\n" +
+    //         "3. CONFIGURE SETTINGS (Optional)\n" +
+    //         "   Click 'Filter Settings' to adjust:\n" +
+    //         "   • Max exams per student per day\n" +
+    //         "   • Room turnover time between exams\n" +
+    //         "   • Minimum gap between exams for students\n" +
+    //         "   • Exam duration per course\n\n" +
+    //         "4. GENERATE SCHEDULE\n" +
+    //         "   Click 'Generate Schedule' to create the timetable.\n" +
+    //         "   The calendar will show all scheduled exams.\n\n" +
+    //         "5. VIEW SCHEDULES\n" +
+    //         "   • Select a student ID to see their personal exam schedule\n" +
+    //         "   • Select a classroom to see exams in that room"
+    //     );
+    //     helpDialog.getDialogPane().setMinWidth(500);
+    //     helpDialog.showAndWait();
+    // }
 
     @FXML
     private void openImportPopup() {

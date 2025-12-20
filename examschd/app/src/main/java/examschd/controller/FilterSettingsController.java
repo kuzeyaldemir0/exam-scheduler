@@ -22,10 +22,12 @@ public class FilterSettingsController {
     @FXML private Spinner<Integer> examStartHourSpinner;
     @FXML private Spinner<Integer> examEndHourSpinner;
 
+    // 🔹 HELP OVERLAY
+    @FXML private VBox helpOverlay;
+
     /* ===================== STATE ===================== */
 
     private List<Course> courses = new ArrayList<>();
-
     private final Map<Course, Spinner<Integer>> durationSpinners = new LinkedHashMap<>();
 
     private int savedMaxExams = 2;
@@ -39,6 +41,12 @@ public class FilterSettingsController {
     @FXML
     public void initialize() {
         setupExtraSpinners();
+
+        // 🔒 Help overlay başlangıçta tamamen kapalı
+        if (helpOverlay != null) {
+            helpOverlay.setVisible(false);
+            helpOverlay.setManaged(false);
+        }
     }
 
     private void setupExtraSpinners() {
@@ -84,10 +92,7 @@ public class FilterSettingsController {
             Spinner<Integer> sp = new Spinner<>();
             sp.setValueFactory(
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(
-                    30,
-                    300,
-                    c.getDurationMinutes(),
-                    5
+                    30, 300, c.getDurationMinutes(), 5
                 )
             );
             sp.setEditable(true);
@@ -104,7 +109,8 @@ public class FilterSettingsController {
         loadExtraSettings(maxExams, roomTurnover, studentGap, 9, 21);
     }
 
-    public void loadExtraSettings(int maxExams, int roomTurnover, int studentGap, int startHour, int endHour) {
+    public void loadExtraSettings(int maxExams, int roomTurnover, int studentGap,
+                                  int startHour, int endHour) {
 
         savedMaxExams = maxExams;
         savedRoomTurnover = roomTurnover;
@@ -144,6 +150,20 @@ public class FilterSettingsController {
         config.setExamEndHour(examEndHourSpinner.getValue());
 
         return config;
+    }
+
+    /* ===================== HELP ACTIONS ===================== */
+
+    @FXML
+    private void showHelp() {
+        helpOverlay.setVisible(true);
+        helpOverlay.setManaged(true);
+    }
+
+    @FXML
+    private void closeHelp() {
+        helpOverlay.setVisible(false);
+        helpOverlay.setManaged(false);
     }
 
     /* ===================== ACTIONS ===================== */

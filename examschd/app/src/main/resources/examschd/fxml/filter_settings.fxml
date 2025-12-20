@@ -4,73 +4,150 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="examschd.controller.FilterSettingsController"
-            stylesheets="@../../css/filter_settings.css"
-            prefWidth="650" prefHeight="520">
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           fx:controller="examschd.controller.FilterSettingsController"
+           stylesheets="@../../css/filter_settings.css"
+           prefWidth="650" prefHeight="520">
 
-    <VBox alignment="TOP_CENTER"
-          spacing="25"
-          prefWidth="650"
-          style="-fx-padding: 25 40 25 40;">
+    <!-- ================= MAIN CONTENT ================= -->
+    <AnchorPane>
 
-        <!-- TITLE -->
-        <Label text="Filter Settings"
-               styleClass="title"/>
+        <VBox alignment="TOP_CENTER"
+              spacing="25"
+              prefWidth="650"
+              style="-fx-padding: 25 40 25 40;">
 
-        <!-- COURSE DURATIONS SECTION -->
-        <VBox spacing="10" prefWidth="580">
-            <Label text="Course Durations" styleClass="section-title"/>
+            <!-- TITLE -->
+            <Label text="Filter Settings"
+                   styleClass="title"/>
 
-            <ScrollPane prefHeight="180"
-                        fitToWidth="true"
-                        styleClass="card">
-                <VBox fx:id="courseDurationList" spacing="12"/>
-            </ScrollPane>
-        </VBox>
+            <!-- COURSE DURATIONS SECTION -->
+            <VBox spacing="10" prefWidth="580">
+                <Label text="Course Durations" styleClass="section-title"/>
 
-        <!-- DAILY MAX EXAM COUNT -->
-        <HBox spacing="15" alignment="CENTER_LEFT">
-            <Label text="Max exams per student per day:" styleClass="label"/>
-            <Spinner fx:id="maxExamsSpinner" prefWidth="90"/>
-        </HBox>
+                <ScrollPane prefHeight="180"
+                            fitToWidth="true"
+                            styleClass="card">
+                    <VBox fx:id="courseDurationList" spacing="12"/>
+                </ScrollPane>
+            </VBox>
 
-        <!-- ROOM TURNOVER TIME -->
-        <HBox spacing="15" alignment="CENTER_LEFT">
-            <Label text="Room turnover time (minutes):" styleClass="label"/>
-            <Spinner fx:id="roomTurnoverSpinner" prefWidth="90"/>
-        </HBox>
-
-        <!-- STUDENT MINIMUM GAP -->
-        <HBox spacing="15" alignment="CENTER_LEFT">
-            <Label text="Min gap between exams for student (minutes):" styleClass="label"/>
-            <Spinner fx:id="studentGapSpinner" prefWidth="90"/>
-        </HBox>
-
-        <!-- EXAM HOURS SECTION -->
-        <VBox spacing="10">
-            <Label text="Exam Day Hours" styleClass="section-title"/>
-
+            <!-- DAILY MAX EXAM COUNT -->
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label text="Start time (hour):" styleClass="label"/>
-                <Spinner fx:id="examStartHourSpinner" prefWidth="90"/>
+                <Label text="Max exams per student per day:" styleClass="label"/>
+                <Spinner fx:id="maxExamsSpinner" prefWidth="90"/>
             </HBox>
 
+            <!-- ROOM TURNOVER TIME -->
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label text="End time (hour):" styleClass="label"/>
-                <Spinner fx:id="examEndHourSpinner" prefWidth="90"/>
+                <Label text="Room turnover time (minutes):" styleClass="label"/>
+                <Spinner fx:id="roomTurnoverSpinner" prefWidth="90"/>
             </HBox>
+
+            <!-- STUDENT MINIMUM GAP -->
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label text="Min gap between exams for student (minutes):" styleClass="label"/>
+                <Spinner fx:id="studentGapSpinner" prefWidth="90"/>
+            </HBox>
+
+            <!-- EXAM HOURS SECTION -->
+            <VBox spacing="10">
+                <Label text="Exam Day Hours" styleClass="section-title"/>
+
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Label text="Start time (hour):" styleClass="label"/>
+                    <Spinner fx:id="examStartHourSpinner" prefWidth="90"/>
+                </HBox>
+
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Label text="End time (hour):" styleClass="label"/>
+                    <Spinner fx:id="examEndHourSpinner" prefWidth="90"/>
+                </HBox>
+            </VBox>
+
+            <!-- BUTTONS -->
+            <HBox alignment="CENTER_RIGHT" spacing="20">
+                <Button text="Help"
+                        onAction="#showHelp"/>
+
+                <Button text="Cancel"
+                        onAction="#closePopup"/>
+
+                <Button text="Save"
+                        onAction="#saveSettings"/>
+            </HBox>
+
         </VBox>
+    </AnchorPane>
 
-        <!-- BUTTONS -->
-        <HBox alignment="CENTER_RIGHT" spacing="20">
-            <Button text="Cancel"
-                    onAction="#closePopup"/>
+    <!-- ================= HELP OVERLAY ================= -->
+    <VBox fx:id="helpOverlay"
+          visible="false"
+          managed="false"
+          alignment="TOP_CENTER"
+          maxWidth="Infinity"
+          maxHeight="Infinity"
+          style="-fx-background-color: rgba(0,0,0,0.6);">
 
-            <Button text="Save"
-                    onAction="#saveSettings"/>
-        </HBox>
+        <padding>
+            <Insets top="50"/>
+        </padding>
 
+        <VBox spacing="18"
+              maxWidth="520"
+              style="
+                  -fx-background-color: white;
+                  -fx-padding: 26;
+                  -fx-background-radius: 18;
+                  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 26, 0, 0, 8);
+              ">
+
+            <!-- HEADER -->
+            <HBox alignment="CENTER_LEFT" spacing="10"
+                  style="-fx-border-color:#E0E0E0; -fx-border-width:0 0 1 0; -fx-padding:0 0 10 0;">
+                <Label text="How Filter Settings Work"
+                       style="-fx-font-size:18; -fx-font-weight:bold;"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Button text="✕"
+                        onAction="#closeHelp"
+                        style="-fx-background-color: transparent; -fx-font-size:14;"/>
+            </HBox>
+
+            <Label text="This panel lets you control how exams are scheduled."
+                   style="-fx-text-fill:#555;"/>
+
+            <Label text="① Course Durations" style="-fx-font-weight:bold;"/>
+            <Label text="Set how long each exam lasts. Longer exams reduce available time slots."
+                   wrapText="true"/>
+
+            <Label text="② Max Exams Per Day" style="-fx-font-weight:bold;"/>
+            <Label text="Limits how many exams a student can have in one day."
+                   wrapText="true"/>
+
+            <Label text="③ Room Turnover Time" style="-fx-font-weight:bold;"/>
+            <Label text="Buffer time between exams in the same classroom."
+                   wrapText="true"/>
+
+            <Label text="④ Student Gap" style="-fx-font-weight:bold;"/>
+            <Label text="Minimum rest time between exams for the same student."
+                   wrapText="true"/>
+
+            <Label text="⑤ Exam Day Hours" style="-fx-font-weight:bold;"/>
+            <Label text="Defines the daily time window when exams can be scheduled."
+                   wrapText="true"/>
+
+            <Button text="Got it"
+                    onAction="#closeHelp"
+                    style="
+                        -fx-background-color:#1976D2;
+                        -fx-text-fill:white;
+                        -fx-font-weight:bold;
+                        -fx-background-radius:10;
+                        -fx-padding:10 22;
+                    "/>
+        </VBox>
     </VBox>
 
-</AnchorPane>
+</StackPane>

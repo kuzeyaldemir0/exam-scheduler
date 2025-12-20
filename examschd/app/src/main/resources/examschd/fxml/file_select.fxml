@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
 
-<StackPane xmlns:fx="http://javafx.com/fxml"
-           fx:controller="examschd.controller.FileSelectController"
-           stylesheets="@../../css/modern.css"
-           prefWidth="750" prefHeight="520">
+<StackPane
+    xmlns="http://javafx.com/javafx/21"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="examschd.controller.FileSelectController"
+    stylesheets="@../../css/modern.css"
+    prefWidth="750" prefHeight="520">
 
-    <VBox spacing="35" alignment="CENTER" styleClass="card"
+    <!-- ================= MAIN CARD ================= -->
+
+    <VBox spacing="35"
+          alignment="CENTER"
+          styleClass="card"
           prefWidth="650">
 
         <Label text="Exam Scheduler — Select Input Files"
                styleClass="title"
-               alignment="CENTER" />
+               alignment="CENTER"/>
 
+        <!-- FILE SELECT ROWS -->
         <VBox spacing="22" alignment="CENTER">
 
             <HBox spacing="20" alignment="CENTER" prefWidth="500">
@@ -58,22 +63,123 @@
 
         </VBox>
 
-        <!-- Continue button -->
-        <Button text="Continue"
-                onAction="#continueToScheduling"
-                styleClass="continue-btn"/>
+        <!-- ACTION BUTTONS -->
+        <HBox spacing="20" alignment="CENTER">
 
-        <!-- Unified warning box -->
+            <Button text="Help"
+                    onAction="#showHelp"
+                    styleClass="blue-button"/>
+
+            <Button text="Continue"
+                    onAction="#continueToScheduling"
+                    styleClass="continue-btn"/>
+        </HBox>
+
+        <!-- WARNING BOX -->
         <HBox fx:id="warningBox"
               spacing="10"
               alignment="CENTER"
               visible="false"
+              managed="false"
               styleClass="warning-box">
 
             <Label text="!" styleClass="warning-icon"/>
-            <Label fx:id="warningLabel" text="" styleClass="warning-text"/>
+            <Label fx:id="warningLabel"
+                   text=""
+                   styleClass="warning-text"/>
         </HBox>
 
     </VBox>
+
+    <!-- ================= HELP OVERLAY ================= -->
+
+    <!-- ================= HELP OVERLAY ================= -->
+<VBox fx:id="helpOverlay"
+      visible="false"
+      managed="false"
+      alignment="TOP_CENTER"
+      maxWidth="Infinity"
+      maxHeight="Infinity"
+      prefWidth="Infinity"
+      prefHeight="Infinity"
+      style="-fx-background-color: rgba(0,0,0,0.6);">
+
+    <padding>
+        <Insets top="60" bottom="60"/>
+    </padding>
+
+    <!-- SCROLL CONTAINER -->
+    <ScrollPane
+            fitToWidth="true"
+            prefViewportHeight="420"
+            maxWidth="520"
+            style="-fx-background-color: transparent;">
+
+        <content>
+            <!-- HELP CARD -->
+            <VBox spacing="20"
+                  style="
+                      -fx-background-color: white;
+                      -fx-padding: 32;
+                      -fx-background-radius: 18;
+                      -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 24, 0, 0, 6);
+                  ">
+
+                <!-- HEADER -->
+                <HBox alignment="CENTER_LEFT" spacing="10"
+                      style="-fx-border-color:#E0E0E0; -fx-border-width:0 0 1 0;">
+
+                    <Label text="How to Import Data"
+                           style="-fx-font-size:20; -fx-font-weight:bold;"/>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <Button text="✕"
+                            onAction="#closeHelp"
+                            style="-fx-background-color: transparent;"/>
+                </HBox>
+
+                <!-- CONTENT -->
+                <Label text="Follow these steps to import all required CSV files:"
+                       style="-fx-text-fill:#555;"/>
+
+                <Label text="① Classrooms File" style="-fx-font-weight:bold;"/>
+                <Label text="Contains classroom names and capacities."
+                       wrapText="true"/>
+
+                <Label text="② Courses File" style="-fx-font-weight:bold;"/>
+                <Label text="Defines courses and exam durations."
+                       wrapText="true"/>
+
+                <Label text="③ Enrollments File" style="-fx-font-weight:bold;"/>
+                <Label text="Maps students to courses."
+                       wrapText="true"/>
+
+                <Label text="④ Students File" style="-fx-font-weight:bold;"/>
+                <Label text="List of student IDs."
+                       wrapText="true"/>
+
+                <Separator/>
+
+                <Label text="ℹ Tips" style="-fx-font-weight:bold;"/>
+                <Label text="• All files must be CSV\n• Select all files before continuing"
+                       wrapText="true"
+                       style="-fx-text-fill:#555;"/>
+
+                <Button text="Got it"
+                        onAction="#closeHelp"
+                        style="
+                            -fx-background-color:#1976D2;
+                            -fx-text-fill:white;
+                            -fx-font-weight:bold;
+                            -fx-background-radius:10;
+                            -fx-padding:10 22;
+                        "/>
+
+            </VBox>
+        </content>
+    </ScrollPane>
+</VBox>
+
 
 </StackPane>

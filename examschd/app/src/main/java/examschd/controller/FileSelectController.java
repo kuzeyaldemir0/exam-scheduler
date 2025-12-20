@@ -5,6 +5,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.io.File;
 
@@ -19,6 +20,7 @@ public class FileSelectController {
 
     @FXML private Label warningLabel;
     @FXML private HBox warningBox;
+    @FXML private javafx.scene.layout.VBox helpOverlay;
 
     private File classroomsFile;
     private File coursesFile;
@@ -107,4 +109,17 @@ public class FileSelectController {
         Stage stage = (Stage) classroomsLabel.getScene().getWindow();
         stage.close();
     }
+
+    @FXML
+    private void showHelp() {
+        helpOverlay.setVisible(true);
+        helpOverlay.setManaged(true);
+    }
+
+    @FXML
+    private void closeHelp() {
+        helpOverlay.setVisible(false);
+        helpOverlay.setManaged(false);
+    }
+
 }

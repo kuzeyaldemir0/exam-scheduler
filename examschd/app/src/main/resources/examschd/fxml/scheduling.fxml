@@ -2,129 +2,215 @@
 
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
 
-<AnchorPane xmlns:fx="http://javafx.com/fxml"
-            fx:id="rootPane"
-            fx:controller="examschd.controller.SchedulingController"
-            stylesheets="@../../css/scheduling.css">
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           fx:id="rootStack"
+           fx:controller="examschd.controller.SchedulingController"
+           stylesheets="@../../css/scheduling.css">
 
-    <VBox spacing="25"
-          alignment="TOP_CENTER"
-          AnchorPane.topAnchor="20"
-          AnchorPane.leftAnchor="20"
-          AnchorPane.rightAnchor="20"
-          AnchorPane.bottomAnchor="20">
+    <!-- ================= MAIN CONTENT ================= -->
+    <AnchorPane fx:id="rootPane">
 
-        <Label text="Exam Scheduler — Dashboard"
-               styleClass="title"/>
+        <VBox spacing="18"
+              alignment="TOP_CENTER"
+              AnchorPane.topAnchor="14"
+              AnchorPane.leftAnchor="20"
+              AnchorPane.rightAnchor="20"
+              AnchorPane.bottomAnchor="20">
 
-        <HBox spacing="15" alignment="CENTER">
-            <Button fx:id="helpBtn"
-                    text="Help"
-                    onAction="#showHelp"
-                    styleClass="blue-button"/>
+            <!-- TITLE -->
+            <Label text="Exam Scheduler — Dashboard"
+                   styleClass="title"/>
 
-            <Button fx:id="openFiltersBtn"
-                    text="Filter Settings"
-                    styleClass="blue-button"/>
+            <!-- TOP BUTTONS -->
+            <HBox spacing="15" alignment="CENTER">
+                <Button text="Help"
+                        onAction="#showHelp"
+                        styleClass="blue-button"/>
 
-            <Button fx:id="importBtn"
-                    text="Import all data"
-                    onAction="#openImportPopup"
-                    styleClass="blue-button"/>
+                <Button fx:id="openFiltersBtn"
+                        text="Filter Settings"
+                        styleClass="blue-button"/>
 
-            <Button fx:id="generateBtn"
-                    text="Generate Schedule"
-                    onAction="#onGenerateSchedule"
-                    styleClass="blue-button"/>
-        </HBox>
+                <Button fx:id="importBtn"
+                        text="Import all data"
+                        onAction="#openImportPopup"
+                        styleClass="blue-button"/>
 
-        <HBox spacing="40" alignment="CENTER">
+                <Button fx:id="generateBtn"
+                        text="Generate Schedule"
+                        onAction="#onGenerateSchedule"
+                        styleClass="blue-button"/>
+            </HBox>
 
-            <VBox spacing="12" styleClass="card">
+            <!-- CARDS -->
+            <HBox spacing="40" alignment="CENTER">
 
-                <Label text="Student Schedule" styleClass="card-title"/>
+                <!-- STUDENT -->
+                <VBox spacing="12" styleClass="card">
+                    <Label text="Student Schedule" styleClass="card-title"/>
+                    <TextField fx:id="studentSearchField"
+                               promptText="Search by student ID..."
+                               styleClass="search-field"/>
+                    <ComboBox fx:id="studentCombo"
+                              promptText="Select Student"
+                              prefWidth="260"/>
+                    <Button fx:id="showStudentBtn"
+                            text="Show Schedule"
+                            prefWidth="260"
+                            styleClass="action-btn"/>
+                </VBox>
 
-                <TextField fx:id="studentSearchField"
-                           promptText="Search by student ID..."
-                           styleClass="search-field"/>
+                <!-- DATE RANGE -->
+                <VBox spacing="12" styleClass="card">
+                    <Label text="Exam Date Range" styleClass="card-title"/>
 
-                <ComboBox fx:id="studentCombo"
-                          promptText="Select Student"
-                          prefWidth="260"/>
+                    <HBox spacing="10">
+                        <Label text="Start:"/>
+                        <DatePicker fx:id="startDatePicker" prefWidth="180"/>
+                    </HBox>
 
-                <Button fx:id="showStudentBtn"
-                        text="Show Schedule"
-                        prefWidth="260"
-                        styleClass="action-btn"/>
-            </VBox>
+                    <HBox spacing="10">
+                        <Label text="End:"/>
+                        <DatePicker fx:id="endDatePicker" prefWidth="180"/>
+                    </HBox>
 
-            <VBox spacing="12" styleClass="card">
+                    <Button fx:id="applyDateRangeBtn"
+                            text="Apply Date Range"
+                            prefWidth="240"
+                            styleClass="action-btn"
+                            onAction="#applyDateRange"/>
+                </VBox>
 
-                <Label text="Exam Date Range" styleClass="card-title"/>
+                <!-- CLASSROOM -->
+                <VBox spacing="12" styleClass="card">
+                    <Label text="Classroom Schedule" styleClass="card-title"/>
+                    <TextField fx:id="classroomSearchField"
+                               promptText="Search classroom name..."
+                               styleClass="search-field"/>
+                    <ComboBox fx:id="classroomCombo"
+                              promptText="Select Classroom"
+                              prefWidth="260"/>
+                    <Button fx:id="showClassroomBtn"
+                            text="Show Schedule"
+                            prefWidth="260"
+                            styleClass="action-btn"/>
+                </VBox>
 
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Label text="Start:"/>
-                    <DatePicker fx:id="startDatePicker" prefWidth="180"/>
-                </HBox>
+            </HBox>
 
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Label text="End:"/>
-                    <DatePicker fx:id="endDatePicker" prefWidth="180"/>
-                </HBox>
+            <!-- SCHEDULE -->
+            <ScrollPane fx:id="scheduleScroll"
+                        VBox.vgrow="ALWAYS"
+                        fitToWidth="true"
+                        fitToHeight="true"
+                        hbarPolicy="AS_NEEDED"
+                        vbarPolicy="AS_NEEDED"
+                        pannable="true"
+                        style="-fx-background-color: transparent;">
 
-                <Button fx:id="applyDateRangeBtn"
-        text="Apply Date Range"
-        prefWidth="240"
-        styleClass="action-btn"
-        onAction="#applyDateRange"/>
-            </VBox>
+                <content>
+                    <GridPane fx:id="scheduleGrid"
+                              hgap="24"
+                              vgap="16"
+                              minHeight="520"
+                              styleClass="schedule-table"/>
+                </content>
+            </ScrollPane>
 
-            <!-- CLASSROOM CARD -->
-            <VBox spacing="12" styleClass="card">
+            <!-- 🔴 UNSCHEDULED ERROR BOX -->
+            <VBox fx:id="unscheduledSection"
+                  spacing="8"
+                  visible="false"
+                  managed="false"
+                  style="
+                      -fx-background-color:#FFEBEE;
+                      -fx-border-color:#EF9A9A;
+                      -fx-border-radius:10;
+                      -fx-background-radius:10;
+                      -fx-padding:16;
+                  "/>
 
-                <Label text="Classroom Schedule" styleClass="card-title"/>
-
-                <TextField fx:id="classroomSearchField"
-                           promptText="Search classroom name..."
-                           styleClass="search-field"/>
-
-                <ComboBox fx:id="classroomCombo"
-                          promptText="Select Classroom"
-                          prefWidth="260"/>
-
-                <Button fx:id="showClassroomBtn"
-                        text="Show Schedule"
-                        prefWidth="260"
-                        styleClass="action-btn"/>
-            </VBox>
-
-        </HBox>
-
-        <ScrollPane fx:id="scheduleScroll"
-                    fitToWidth="false"
-                    fitToHeight="false"
-                    hbarPolicy="AS_NEEDED"
-                    vbarPolicy="AS_NEEDED"
-                    pannable="true"
-                    VBox.vgrow="ALWAYS"
-                    prefHeight="400">
-
-            <content>
-                <GridPane fx:id="scheduleGrid"
-                          hgap="12"
-                          vgap="6"
-                          styleClass="schedule-table"/>
-            </content>
-
-        </ScrollPane>
-
-        <VBox fx:id="unscheduledSection"
-              spacing="8"
-              style="-fx-padding: 20; -fx-border-color: #ffcdd2; -fx-border-width: 1; -fx-border-radius: 8; -fx-background-color: #ffebee;"
-              VBox.vgrow="NEVER">
         </VBox>
+    </AnchorPane>
 
+    <!-- ================= HELP OVERLAY ================= -->
+    <VBox fx:id="helpOverlay"
+          visible="false"
+          managed="false"
+          alignment="TOP_CENTER"
+          maxWidth="Infinity"
+          maxHeight="Infinity"
+          prefWidth="Infinity"
+          prefHeight="Infinity"
+          style="-fx-background-color: rgba(0,0,0,0.6);">
+
+        <padding>
+            <Insets top="80" right="0" bottom="0" left="0"/>
+        </padding>
+
+        <VBox spacing="20"
+              maxWidth="480"
+              style="
+                  -fx-background-color: white;
+                  -fx-padding: 32;
+                  -fx-background-radius: 18;
+                  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 24, 0, 0, 6);
+              ">
+
+            <!-- HEADER -->
+            <HBox alignment="CENTER_LEFT"
+                  spacing="10"
+                  style="
+                      -fx-padding: 0 0 12 0;
+                      -fx-border-color:#E0E0E0;
+                      -fx-border-width:0 0 1 0;
+                  ">
+
+                <Label text="How to Use Exam Scheduler"
+                       style="-fx-font-size:20; -fx-font-weight:bold;"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Button text="✕"
+                        onAction="#closeHelp"
+                        style="-fx-background-color: transparent; -fx-font-size:14;"/>
+            </HBox>
+
+            <!-- CONTENT -->
+            <Label text="Follow these steps to create an exam timetable:"
+                   style="-fx-text-fill:#555;"/>
+
+            <Label text="① Import Data" style="-fx-font-weight:bold;"/>
+            <Label text="Upload CSV files for students, courses, classrooms and enrollments."
+                   wrapText="true"/>
+
+            <Label text="② Select Date Range" style="-fx-font-weight:bold;"/>
+            <Label text="Choose the exam period and click Apply Date Range."
+                   wrapText="true"/>
+
+            <Label text="③ Generate Schedule" style="-fx-font-weight:bold;"/>
+            <Label text="Click Generate Schedule to create the exam calendar."
+                   wrapText="true"/>
+
+            <Separator/>
+
+            <Label text="ℹ Tips" style="-fx-font-weight:bold;"/>
+            <Label text="• Filters are optional\n• Hover exams to see details\n• Unscheduled courses appear below the calendar"
+                   wrapText="true"
+                   style="-fx-text-fill:#555;"/>
+
+            <Button text="Got it"
+                    onAction="#closeHelp"
+                    style="
+                        -fx-background-color:#1976D2;
+                        -fx-text-fill:white;
+                        -fx-font-weight:bold;
+                        -fx-background-radius:10;
+                        -fx-padding:10 22;
+                    "/>
+        </VBox>
     </VBox>
 
-</AnchorPane>
+</StackPane>
