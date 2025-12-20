@@ -29,8 +29,8 @@ public class FileSelectController {
 
     @FXML private Label warningLabel;
     @FXML private HBox warningBox;
-    @FXML private javafx.scene.layout.VBox helpOverlay;
-    @FXML private javafx.scene.control.Button gotItBtn;
+    @FXML private VBox helpOverlay;
+    @FXML private Button gotItBtn;
 
     private File classroomsFile;
     private File coursesFile;
