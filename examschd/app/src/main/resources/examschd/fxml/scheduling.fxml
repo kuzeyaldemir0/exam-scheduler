@@ -42,6 +42,11 @@
                         text="Generate Schedule"
                         onAction="#onGenerateSchedule"
                         styleClass="blue-button"/>
+
+                <Button fx:id="exportBtn"
+                        text="Export All Exams"
+                        onAction="#exportSchedule"
+                        styleClass="blue-button"/>
             </HBox>
 
             <!-- CARDS -->

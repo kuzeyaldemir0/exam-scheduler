@@ -14,12 +14,14 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
@@ -49,6 +51,8 @@ public class SchedulingController {
     @FXML private Button generateBtn;   
     @FXML private ScrollPane scheduleScroll;
     @FXML private Button gotItBtn;
+    @FXML private Button exportBtn;
+
 
 
 
@@ -109,6 +113,11 @@ public class SchedulingController {
                 .or(dateRangeApplied.not())
         );
         addGotItHoverColorAnimation();
+        exportBtn.setDisable(true);
+        exportBtn.setTooltip(
+            new Tooltip("Generate the schedule to enable export.")
+        );
+
     }
 
     private void addGotItHoverColorAnimation() {
@@ -667,7 +676,15 @@ public class SchedulingController {
 
         renderEmptySchedule(start, end);
         dateRangeApplied.set(true);
+
+        // 🔴 KRİTİK: eski schedule artık geçersiz
+        preparedScheduleResult = null;
+        exportBtn.setDisable(true);
+        exportBtn.setTooltip(
+            new Tooltip("Generate the schedule to enable export.")
+        );
     }
+
 
 
     @FXML
@@ -677,7 +694,7 @@ public class SchedulingController {
             return;
         }
 
-        filteredStudentId = null;  // Clear any student filter
+        filteredStudentId = null;
 
         preparedScheduleResult = scheduler.generateSchedule(
             allStudentsList,
@@ -691,7 +708,15 @@ public class SchedulingController {
 
         renderSchedule(preparedScheduleResult.getSchedule());
         displayUnscheduledCourses(preparedScheduleResult);
+
+        // 🔐 EXPORT KONTROLÜ
+        boolean hasUnscheduled =
+            preparedScheduleResult.getUnscheduledCourses() != null &&
+            !preparedScheduleResult.getUnscheduledCourses().isEmpty();
+
+        exportBtn.setDisable(hasUnscheduled);
     }
+
 
     private void openFiltersPopup() {
         try {
@@ -733,6 +758,97 @@ public class SchedulingController {
             e.printStackTrace();
         }
     }
+
+    @FXML
+    private void exportSchedule() {
+
+        if (preparedScheduleResult == null) {
+            System.out.println("No schedule to export.");
+            return;
+        }
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export Exam Schedule");
+        chooser.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter("CSV Files", "*.csv")
+        );
+
+        File file = chooser.showSaveDialog(
+            scheduleGrid.getScene().getWindow()
+        );
+
+        if (file == null) return;
+
+        writeScheduleToCsv(file);
+    }
+
+    private void writeScheduleToCsv(File file) {
+
+        try (PrintWriter pw = new PrintWriter(file)) {
+
+            // CSV HEADER
+            pw.println("Course,Classroom,Day,StartTime,EndTime");
+
+            Map<LocalDate, List<ExamSession>> schedule =
+                preparedScheduleResult.getSchedule();
+
+            for (Map.Entry<LocalDate, List<ExamSession>> entry : schedule.entrySet()) {
+
+                LocalDate day = entry.getKey();
+
+                for (ExamSession session : entry.getValue()) {
+
+                    Course course = session.getCourse();
+                    if (course == null) continue;
+
+                    String courseName = course.getCourseName();
+
+                    // Örn: "09:00 - 11:00"
+                    String timeSlot = session.getTimeSlot();
+                    String startTime = "";
+                    String endTime = "";
+
+                    if (timeSlot != null && timeSlot.contains("-")) {
+                        String[] parts = timeSlot.split("-");
+                        startTime = parts[0].trim();
+                        endTime = parts[1].trim();
+                    }
+
+                    // Her sınıf için ayrı satır
+                    for (ExamPartition p : session.getPartitions()) {
+
+                        if (p.getClassroom() == null) continue;
+
+                        String classroom = p.getClassroom().getName();
+
+                        pw.printf(
+                            "%s,%s,%s,%s,%s%n",
+                            escape(courseName),
+                            escape(classroom),
+                            day,
+                            startTime,
+                            endTime
+                        );
+                    }
+                }
+            }
+
+            System.out.println("Schedule exported successfully: " + file.getAbsolutePath());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String escape(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"")) {
+            value = value.replace("\"", "\"\"");
+            return "\"" + value + "\"";
+        }
+        return value;
+    }
+
 
 
 }
