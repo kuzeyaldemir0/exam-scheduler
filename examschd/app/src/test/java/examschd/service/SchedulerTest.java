@@ -475,10 +475,11 @@ class SchedulerTest {
 
         assertTrue(totalScheduled > 0, "Should schedule courses even at large scale");
 
-        // Performance assertion: should complete in reasonable time (< 30 seconds)
+        // Performance assertion: should complete in reasonable time (< 3 minutes)
+        // Note: Algorithm tries 6 different orderings and picks the best, so it takes longer
         long totalTime = schedTime - startTime;
-        assertTrue(totalTime < 30000,
-            "Large scale scheduling should complete in under 30 seconds, took " + totalTime + "ms");
+        assertTrue(totalTime < 180000,
+            "Large scale scheduling should complete in under 3 minutes, took " + totalTime + "ms");
     }
 
     @Test

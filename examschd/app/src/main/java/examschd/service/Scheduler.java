@@ -12,6 +12,7 @@ import examschd.model.ExamConfig;
 import examschd.model.ExamPartition;
 import examschd.model.ExamSession;
 import examschd.model.ScheduleResult;
+import examschd.model.SchedulingFailureReason;
 import examschd.model.Student;
 import examschd.model.StudentAssignment;
 import examschd.model.TimeSlottedExam;
@@ -46,42 +47,6 @@ public class Scheduler {
         if (endHour == config.getExamEndHour() && endMinute > 0) return true;
 
         return false;
-    }
-
-    private boolean studentHasConflictAt(Student student, LocalDateTime startTime, LocalDateTime endTime,
-                                         int breakTimeMinutes, List<ExamSession> allScheduledSessions) {
-        for (ExamSession session : allScheduledSessions) {
-            if (session.getCourse().getStudents().contains(student)) {
-                if (session.overlaps(new ExamSession(-1, startTime, endTime, 0, null), breakTimeMinutes)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean courseHasStudentConflictWith(Course course, List<ExamSession> sessionsAtTime) {
-        Set<Student> courseStudents = new HashSet<>(course.getStudents());
-
-        for (ExamSession session : sessionsAtTime) {
-            for (Student student : session.getCourse().getStudents()) {
-                if (courseStudents.contains(student)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private List<ExamSession> getSessionsAtTime(LocalDateTime startTime, LocalDateTime endTime,
-                                                 int breakTimeMinutes, List<ExamSession> allScheduledSessions) {
-        List<ExamSession> result = new ArrayList<>();
-        for (ExamSession session : allScheduledSessions) {
-            if (session.overlaps(new ExamSession(-1, startTime, endTime, 0, null), breakTimeMinutes)) {
-                result.add(session);
-            }
-        }
-        return result;
     }
 
     /**
@@ -137,6 +102,24 @@ public class Scheduler {
             return Integer.compare(conflictB, conflictA);
         });
 
+        return sorted;
+    }
+
+    /**
+     * Sorts courses by student count in descending order (largest classes first).
+     */
+    private List<Course> sortByStudentCount(List<Course> courses) {
+        List<Course> sorted = new ArrayList<>(courses);
+        sorted.sort((a, b) -> Integer.compare(b.getStudents().size(), a.getStudents().size()));
+        return sorted;
+    }
+
+    /**
+     * Sorts courses by exam duration in descending order (longest exams first).
+     */
+    private List<Course> sortByDuration(List<Course> courses) {
+        List<Course> sorted = new ArrayList<>(courses);
+        sorted.sort((a, b) -> Integer.compare(b.getDurationMinutes(), a.getDurationMinutes()));
         return sorted;
     }
 
@@ -247,13 +230,15 @@ public class Scheduler {
      * @param allRooms all available classrooms
      * @param examDays all available exam days
      * @param config scheduling configuration with constraints
+     * @param failureReasons map to populate with failure reasons for unscheduled courses
      * @return list of exams with assigned time slots (no classrooms yet)
      */
     private List<TimeSlottedExam> assignTimeSlots(
             List<Course> sortedCourses,
             List<Classroom> allRooms,
             List<LocalDate> examDays,
-            ExamConfig config) {
+            ExamConfig config,
+            Map<Course, SchedulingFailureReason> failureReasons) {
 
         System.out.println("\n=== PHASE 1: TIME SLOT ASSIGNMENT ===");
 
@@ -269,6 +254,7 @@ public class Scheduler {
             boolean hasBeenScheduled = false;
             int studentCount = currentCourse.getStudents().size();
             int durationMinutes = currentCourse.getDurationMinutes();
+            SchedulingFailureReason lastFailureReason = SchedulingFailureReason.NO_AVAILABLE_SLOTS;
 
             // STRATEGY 1: Try to pack into existing time slots (bin-packing for efficiency)
             for (LocalDateTime existingSlotStart : usedTimeSlots) {
@@ -284,12 +270,21 @@ public class Scheduler {
                     continue; // Try next time slot
                 }
 
-                // Check 2: Do any students in this course already have exams at this time?
-                List<ExamSession> sessionsAtThisTime = getSessionsAtTime(
-                    existingSlotStart, slotEnd, studentGapMinutes, new ArrayList<>()
-                );
+                // Check 2: Do any students in this course already have exams at this time slot?
+                boolean hasStudentConflictAtSlot = false;
+                for (Student student : currentCourse.getStudents()) {
+                    for (TimeSlottedExam scheduled : timeSlottedExams) {
+                        if (scheduled.getStartTime().equals(existingSlotStart) &&
+                            scheduled.getCourse().getStudents().contains(student)) {
+                            hasStudentConflictAtSlot = true;
+                            break;
+                        }
+                    }
+                    if (hasStudentConflictAtSlot) break;
+                }
 
-                if (courseHasStudentConflictWith(currentCourse, sessionsAtThisTime)) {
+                if (hasStudentConflictAtSlot) {
+                    lastFailureReason = SchedulingFailureReason.STUDENT_CONFLICT;
                     continue; // Try next time slot
                 }
 
@@ -315,6 +310,7 @@ public class Scheduler {
                 }
 
                 if (studentExceedsMaxPerDay) {
+                    lastFailureReason = SchedulingFailureReason.MAX_EXAMS_PER_DAY_EXCEEDED;
                     continue; // Try next time slot
                 }
 
@@ -324,6 +320,7 @@ public class Scheduler {
                 );
 
                 if (remainingCapacity < studentCount) {
+                    lastFailureReason = SchedulingFailureReason.CLASSROOM_CAPACITY_INSUFFICIENT;
                     continue; // Not enough room, try next time slot
                 }
 
@@ -366,12 +363,25 @@ public class Scheduler {
 
                         // Check 2: Does each student in this course have any conflicts?
                         boolean hasStudentConflict = false;
+                        boolean exceededMaxPerDay = false;
                         for (Student currentStudent : currentCourse.getStudents()) {
                             // Check if student has overlapping exam with gap buffer
-                            if (studentHasConflictAt(currentStudent, startTime, endTime, studentGapMinutes, new ArrayList<>())) {
-                                hasStudentConflict = true;
-                                break;
+                            for (TimeSlottedExam scheduled : timeSlottedExams) {
+                                if (scheduled.getCourse().getStudents().contains(currentStudent)) {
+                                    // Check time overlap considering gap
+                                    LocalDateTime scheduledStart = scheduled.getStartTime();
+                                    LocalDateTime scheduledEnd = scheduled.getEndTime();
+                                    LocalDateTime gapStart = scheduledStart.minusMinutes(studentGapMinutes);
+                                    LocalDateTime gapEnd = scheduledEnd.plusMinutes(studentGapMinutes);
+
+                                    // Overlap if NOT (endTime <= gapStart OR startTime >= gapEnd)
+                                    if (!(endTime.compareTo(gapStart) <= 0 || startTime.compareTo(gapEnd) >= 0)) {
+                                        hasStudentConflict = true;
+                                        break;
+                                    }
+                                }
                             }
+                            if (hasStudentConflict) break;
 
                             // Check if student exceeds max exams per day
                             int examsOnThisDay = 0;
@@ -384,11 +394,15 @@ public class Scheduler {
                             }
                             if (examsOnThisDay >= maxExamsPerDay) {
                                 hasStudentConflict = true;
+                                exceededMaxPerDay = true;
                                 break;
                             }
                         }
 
                         if (hasStudentConflict) {
+                            lastFailureReason = exceededMaxPerDay
+                                ? SchedulingFailureReason.MAX_EXAMS_PER_DAY_EXCEEDED
+                                : SchedulingFailureReason.STUDENT_CONFLICT;
                             continue;
                         }
 
@@ -398,6 +412,7 @@ public class Scheduler {
                         );
 
                         if (remainingCapacity < studentCount) {
+                            lastFailureReason = SchedulingFailureReason.CLASSROOM_CAPACITY_INSUFFICIENT;
                             continue; // Not enough capacity
                         }
 
@@ -423,7 +438,8 @@ public class Scheduler {
 
             if (!hasBeenScheduled) {
                 System.out.println("✗ Phase 1 Failed: " + currentCourse.getCourseName() +
-                    " could not be time-slotted");
+                    " could not be time-slotted (" + lastFailureReason.getDisplayMessage() + ")");
+                failureReasons.put(currentCourse, lastFailureReason);
             }
         }
 
@@ -656,6 +672,41 @@ public class Scheduler {
 
     /* ===================== MAIN ===================== */
 
+    /**
+     * Runs a single scheduling attempt with a specific course ordering.
+     * Returns the result without modifying Course.examSessions (that's done in the final pass).
+     */
+    private ScheduleResult tryScheduleWithOrdering(
+            List<Course> orderedCourses,
+            List<Classroom> classrooms,
+            List<LocalDate> examDays,
+            ExamConfig config) {
+
+        Map<Course, SchedulingFailureReason> failureReasons = new HashMap<>();
+
+        // PHASE 1: Time Slot Assignment
+        List<TimeSlottedExam> timeSlottedExams = assignTimeSlots(
+            orderedCourses, classrooms, examDays, config, failureReasons
+        );
+
+        // Track unscheduled courses
+        Set<Course> scheduledCourses = new HashSet<>();
+        for (TimeSlottedExam exam : timeSlottedExams) {
+            scheduledCourses.add(exam.getCourse());
+        }
+
+        List<Course> unscheduledCourses = new ArrayList<>();
+        for (Course course : orderedCourses) {
+            if (!scheduledCourses.contains(course)) {
+                unscheduledCourses.add(course);
+            }
+        }
+
+        // For comparison purposes, we just need to know how many were scheduled
+        // We'll run Phase 2 only for the winning attempt
+        return new ScheduleResult(new LinkedHashMap<>(), unscheduledCourses, failureReasons);
+    }
+
     public ScheduleResult generateSchedule(
             List<Student> students,
             List<Course> courses,
@@ -682,34 +733,75 @@ public class Scheduler {
         List<LocalDate> examDays = buildDateRange(startDate, endDate);
         if (examDays.isEmpty()) return new ScheduleResult(new LinkedHashMap<>(), new ArrayList<>());
 
-        // Sort courses by conflict score (most constrained first) for better scheduling
-        List<Course> sortedCourses = sortByConflicts(courses);
+        // Try multiple ordering strategies and pick the best result
+        System.out.println("\n=== Trying Multiple Scheduling Strategies ===");
 
-        // PHASE 1: Time Slot Assignment
+        List<List<Course>> orderings = new ArrayList<>();
+        List<String> orderingNames = new ArrayList<>();
+
+        // Strategy 1: By conflict score (most constrained first)
+        orderings.add(sortByConflicts(courses));
+        orderingNames.add("Conflict Score");
+
+        // Strategy 2: By student count (largest classes first)
+        orderings.add(sortByStudentCount(courses));
+        orderingNames.add("Student Count");
+
+        // Strategy 3: By duration (longest exams first)
+        orderings.add(sortByDuration(courses));
+        orderingNames.add("Duration");
+
+        // Try each ordering and track the best result
+        int bestIndex = 0;
+        int bestScheduledCount = -1;
+
+        for (int i = 0; i < orderings.size(); i++) {
+            ScheduleResult result = tryScheduleWithOrdering(
+                orderings.get(i), classrooms, examDays, config
+            );
+            int scheduledCount = courses.size() - result.getUnscheduledCourses().size();
+
+            System.out.println("Strategy '" + orderingNames.get(i) + "': " +
+                scheduledCount + "/" + courses.size() + " courses scheduled");
+
+            if (scheduledCount > bestScheduledCount) {
+                bestScheduledCount = scheduledCount;
+                bestIndex = i;
+            }
+        }
+
+        System.out.println("\nBest strategy: " + orderingNames.get(bestIndex) +
+            " (" + bestScheduledCount + "/" + courses.size() + " courses)");
+
+        // Run the winning strategy again with full Phase 2
+        System.out.println("\n=== Running Final Schedule with Best Strategy ===");
+        List<Course> bestOrdering = orderings.get(bestIndex);
+        Map<Course, SchedulingFailureReason> failureReasons = new HashMap<>();
+
         List<TimeSlottedExam> timeSlottedExams = assignTimeSlots(
-            sortedCourses, classrooms, examDays, config
+            bestOrdering, classrooms, examDays, config, failureReasons
         );
 
-        // PHASE 2: Classroom Assignment
+        // PHASE 2: Classroom Assignment (only for final result)
         Map<LocalDate, List<ExamSession>> result = assignClassrooms(
             timeSlottedExams, classrooms, config, 1, 1, 1
         );
 
-        // Track unscheduled courses (those that Phase 1 could not time-slot)
+        // Build final unscheduled list
         Set<Course> scheduledCourses = new HashSet<>();
-        for (TimeSlottedExam timeSlottedExam : timeSlottedExams) {
-            scheduledCourses.add(timeSlottedExam.getCourse());
+        for (TimeSlottedExam exam : timeSlottedExams) {
+            scheduledCourses.add(exam.getCourse());
         }
 
         List<Course> unscheduledCourses = new ArrayList<>();
-        for (Course course : sortedCourses) {
+        for (Course course : bestOrdering) {
             if (!scheduledCourses.contains(course)) {
                 unscheduledCourses.add(course);
             }
         }
 
         System.out.println("=== Schedule Complete ===");
-        return new ScheduleResult(result, unscheduledCourses);
+        return new ScheduleResult(result, unscheduledCourses, failureReasons);
     }
 
     /* ===================== DATA BUILD ===================== */
