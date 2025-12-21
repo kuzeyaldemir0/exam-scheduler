@@ -1,17 +1,18 @@
 package examschd.service.readers;
 
-import com.opencsv.CSVReader;
 import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvValidationException;
-
 import examschd.model.Enrollment;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class EnrollmentCsvReader {
 
@@ -62,15 +63,16 @@ public class EnrollmentCsvReader {
                         .replaceAll("[‘’']", "")      // all single quotes
                         .replaceAll(";", " ");        // ; -> space
 
-                List<String> studentIds = new ArrayList<>();
-
-                //SPLIT EVERYTHING
+                // Use LinkedHashSet to remove duplicates while preserving insertion order
+                Set<String> studentIdSet = new LinkedHashSet<>();
                 for (String s : listStr.split("[,;|\\t ]+")) {
                     s = s.trim();
                     if (s.matches("Std_ID_\\d+")) {
-                        studentIds.add(s);
+                        studentIdSet.add(s);
                     }
                 }
+
+                List<String> studentIds = new ArrayList<>(studentIdSet);
 
                 // DEBUG
                 /*System.out.println("Parsed students: " + studentIds.size());

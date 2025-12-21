@@ -255,4 +255,24 @@ class EnrollmentCsvReaderTest {
         assertThrows(IOException.class,
                 () -> EnrollmentCsvReader.read("non_existent_file.csv"));
     }
+
+    @Test
+    void testRead_RemovesDuplicatesWithinSameCourse() throws Exception {
+        String csv = """
+            CourseCode_01
+            ['Std_ID_001', 'Std_ID_002', 'Std_ID_001', 'Std_ID_003', 'Std_ID_002']
+            """;
+
+        writeCsv(csv);
+
+        List<Enrollment> list = EnrollmentCsvReader.read(tempFile.toString());
+
+        assertEquals(1, list.size());
+        assertEquals(3, list.get(0).getStudentNumbers().size());
+
+        assertEquals("Std_ID_001", list.get(0).getStudentNumbers().get(0));
+        assertEquals("Std_ID_002", list.get(0).getStudentNumbers().get(1));
+        assertEquals("Std_ID_003", list.get(0).getStudentNumbers().get(2));
+    }
+
 }
