@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exam Scheduler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+<header class="hero">
+    <h1>Exam Scheduler</h1>
+    <p>
+        A desktop application for generating conflict-free exam timetables
+        with automatic classroom assignment
+    </p>
+</header>
+
+<section class="container">
+
+    <section class="card">
+        <h2>Overview</h2>
+        <p>
+            Exam Scheduler is a JavaFX-based desktop application designed to
+            generate <strong>conflict-free exam schedules</strong> while
+            automatically assigning classrooms.
+        </p>
+        <p>
+            The system uses a <strong>two-phase scheduling architecture</strong>
+            that separates time-slot decisions from classroom allocation,
+            ensuring scalability and robustness.
+        </p>
+    </section>
+
+    <section class="image-block">
+        <img src="images/main1.png" alt="Main Dashboard">
+        <p class="caption">Main dashboard with calendar-based exam schedule</p>
+    </section>
+
+    <section class="card">
+        <h2>Key Features</h2>
+
+        <ul>
+            <li>CSV import for students, courses, classrooms, and enrollments</li>
+            <li>Two-phase scheduling architecture</li>
+            <li>No student exam conflicts</li>
+            <li>Maximum 2 exams per day per student</li>
+            <li>Minimum 90-minute gap between exams</li>
+            <li>Automatic classroom assignment (bin-packing)</li>
+            <li>Room splitting for large courses</li>
+            <li>Student & classroom filtered views</li>
+            <li>CSV export of generated schedules</li>
+            <li>Stress-tested up to 10,000 students</li>
+        </ul>
+    </section>
+
+    <section class="image-block">
+        <img src="images/import.png" alt="CSV Import">
+        <p class="caption">CSV import dialog for system data</p>
+    </section>
+
+    <section class="image-block">
+        <img src="images/filterpopup.png" alt="Filter Settings">
+        <p class="caption">User-configurable scheduling constraints</p>
+    </section>
+
+    <section class="image-block">
+        <img src="images/helpscreen.png" alt="Help Dialog">
+        <p class="caption">In-app help dialog guiding the workflow</p>
+    </section>
+
+    <section class="card">
+        <h2>Architecture</h2>
+
+        <h3>Phase 1: Time Slot Assignment</h3>
+        <ul>
+            <li>Student-centric, conflict-aware scheduling</li>
+            <li>Most constrained courses scheduled first</li>
+            <li>Bin-packing into existing time slots</li>
+            <li>Partial scheduling supported</li>
+        </ul>
+
+        <h3>Phase 2: Classroom Assignment</h3>
+        <ul>
+            <li>Resource-aware bin-packing</li>
+            <li>Largest classrooms assigned first</li>
+            <li>Automatic multi-room splitting</li>
+        </ul>
+    </section>
+
+    <section class="card">
+        <h2>Tech Stack</h2>
+
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Technology</th>
+            </tr>
+            <tr>
+                <td>Language</td>
+                <td>Java 21</td>
+            </tr>
+            <tr>
+                <td>GUI</td>
+                <td>JavaFX</td>
+            </tr>
+            <tr>
+                <td>Database</td>
+                <td>SQLite</td>
+            </tr>
+            <tr>
+                <td>Build</td>
+                <td>Gradle</td>
+            </tr>
+            <tr>
+                <td>Testing</td>
+                <td>JUnit 5</td>
+            </tr>
+        </table>
+    </section>
+
+</section>
+
+<footer>
+    © 2025 Exam Scheduler · JavaFX Desktop Application
+</footer>
+
+</body>
+</html>
