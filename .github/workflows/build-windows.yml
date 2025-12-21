@@ -55,12 +55,10 @@ jobs:
           path: ./examschd/dist/ExamScheduler-Windows-Portable.zip
           retention-days: 30
 
-      - name: Create Windows EXE installer with jpackage
+      - name: Create Windows EXE installer from app-image
         run: |
           jpackage `
-            --input ./app/build/libs `
-            --main-jar ExamScheduler-all.jar `
-            --main-class examschd.Launcher `
+            --app-image ./dist/ExamScheduler `
             --name ExamScheduler `
             --app-version 1.0.0 `
             --type exe `
@@ -71,12 +69,10 @@ jobs:
         working-directory: ./examschd
         shell: pwsh
 
-      - name: Create Windows MSI installer with jpackage
+      - name: Create Windows MSI installer from app-image
         run: |
           jpackage `
-            --input ./app/build/libs `
-            --main-jar ExamScheduler-all.jar `
-            --main-class examschd.Launcher `
+            --app-image ./dist/ExamScheduler `
             --name ExamScheduler `
             --app-version 1.0.0 `
             --type msi `
