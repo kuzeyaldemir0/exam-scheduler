@@ -29,7 +29,7 @@ jobs:
         run: ./gradlew fatJar --no-daemon
         working-directory: ./examschd
 
-      - name: Create Windows EXE with jpackage
+      - name: Create portable Windows app with jpackage
         run: |
           jpackage `
             --input ./app/build/libs `
@@ -37,26 +37,34 @@ jobs:
             --main-class examschd.Launcher `
             --name ExamScheduler `
             --app-version 1.0.0 `
-            --type exe `
-            --dest ./dist `
-            --win-console
+            --type app-image `
+            --dest ./dist
         working-directory: ./examschd
         shell: pwsh
 
-      - name: Upload Windows EXE
+      - name: Zip the portable app
+        run: |
+          Compress-Archive -Path ./dist/ExamScheduler -DestinationPath ./dist/ExamScheduler-Windows-Portable.zip
+        working-directory: ./examschd
+        shell: pwsh
+
+      - name: Upload Windows App (Portable ZIP)
         uses: actions/upload-artifact@v4
         with:
           name: ExamScheduler-Windows
-          path: ./examschd/dist/*.exe
+          path: ./examschd/dist/ExamScheduler-Windows-Portable.zip
           retention-days: 30
 
-      - name: Test EXE was created
+      - name: Verify build
         run: |
-          if (Test-Path "./examschd/dist/*.exe") {
-            Write-Host "Windows EXE created successfully!"
-            Get-ChildItem ./examschd/dist -Filter *.exe | ForEach-Object { Write-Host "  - $($_.Name) ($([math]::Round($_.Length/1MB, 2)) MB)" }
+          $exePath = "./examschd/dist/ExamScheduler/ExamScheduler.exe"
+          if (Test-Path $exePath) {
+            $size = [math]::Round((Get-Item $exePath).Length/1MB, 2)
+            Write-Host "ExamScheduler.exe created successfully! ($size MB)"
+            Write-Host "Contents of portable app:"
+            Get-ChildItem ./examschd/dist/ExamScheduler | Format-Table Name, Length
           } else {
-            Write-Error "Failed to create Windows EXE"
+            Write-Error "Failed to create ExamScheduler.exe"
             exit 1
           }
         shell: pwsh
