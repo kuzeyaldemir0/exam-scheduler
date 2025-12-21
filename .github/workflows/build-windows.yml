@@ -55,7 +55,7 @@ jobs:
           path: ./examschd/dist/ExamScheduler-Windows-Portable.zip
           retention-days: 30
 
-      - name: Create Windows installer with jpackage
+      - name: Create Windows EXE installer with jpackage
         run: |
           jpackage `
             --input ./app/build/libs `
@@ -71,11 +71,34 @@ jobs:
         working-directory: ./examschd
         shell: pwsh
 
-      - name: Upload Windows Installer
+      - name: Create Windows MSI installer with jpackage
+        run: |
+          jpackage `
+            --input ./app/build/libs `
+            --main-jar ExamScheduler-all.jar `
+            --main-class examschd.Launcher `
+            --name ExamScheduler `
+            --app-version 1.0.0 `
+            --type msi `
+            --dest ./dist/installer `
+            --win-dir-chooser `
+            --win-menu `
+            --win-shortcut
+        working-directory: ./examschd
+        shell: pwsh
+
+      - name: Upload Windows EXE Installer
         uses: actions/upload-artifact@v4
         with:
-          name: ExamScheduler-Installer
+          name: ExamScheduler-Installer-EXE
           path: ./examschd/dist/installer/*.exe
+          retention-days: 30
+
+      - name: Upload Windows MSI Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExamScheduler-Installer-MSI
+          path: ./examschd/dist/installer/*.msi
           retention-days: 30
 
       - name: Verify builds
@@ -87,13 +110,17 @@ jobs:
             Write-Host "Portable ExamScheduler.exe: $size MB"
           }
 
-          Write-Host "`n=== Installer ==="
-          $installerPath = Get-ChildItem ./examschd/dist/installer/*.exe -ErrorAction SilentlyContinue
-          if ($installerPath) {
-            $size = [math]::Round($installerPath.Length/1MB, 2)
-            Write-Host "Installer: $($installerPath.Name) ($size MB)"
-          } else {
-            Write-Error "Failed to create installer"
-            exit 1
+          Write-Host "`n=== EXE Installer ==="
+          $exeInstaller = Get-ChildItem ./examschd/dist/installer/*.exe -ErrorAction SilentlyContinue
+          if ($exeInstaller) {
+            $size = [math]::Round($exeInstaller.Length/1MB, 2)
+            Write-Host "EXE Installer: $($exeInstaller.Name) ($size MB)"
+          }
+
+          Write-Host "`n=== MSI Installer ==="
+          $msiInstaller = Get-ChildItem ./examschd/dist/installer/*.msi -ErrorAction SilentlyContinue
+          if ($msiInstaller) {
+            $size = [math]::Round($msiInstaller.Length/1MB, 2)
+            Write-Host "MSI Installer: $($msiInstaller.Name) ($size MB)"
           }
         shell: pwsh
