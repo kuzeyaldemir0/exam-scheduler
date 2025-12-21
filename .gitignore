@@ -87,3 +87,4 @@ System Volume Information/
 *.db-shm
 *.db-wal
 
+dist/

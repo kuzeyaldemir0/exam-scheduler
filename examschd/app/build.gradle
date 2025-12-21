@@ -52,7 +52,7 @@ tasks.register('fatJar', Jar) {
     archiveVersion.set('')
 
     manifest {
-        attributes 'Main-Class': 'examschd.App'
+        attributes 'Main-Class': 'examschd.Launcher'
     }
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -76,7 +76,7 @@ tasks.register('jpackageWindows', Exec) {
     commandLine 'jpackage',
         '--input', jarFile.parentFile.absolutePath,
         '--main-jar', jarFile.name,
-        '--main-class', 'examschd.App',
+        '--main-class', 'examschd.Launcher',
         '--name', 'ExamScheduler',
         '--app-version', '1.0.0',
         '--type', 'exe',
