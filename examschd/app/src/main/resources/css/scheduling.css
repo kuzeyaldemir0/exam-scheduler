@@ -76,18 +76,32 @@
 }
 
 /* Gray style buttons (Cancel, small controls) */
+/* Primary soft action button (Show Schedule) */
 .action-btn {
-    -fx-background-color: #f3f3f3;
-    -fx-border-color: #ddd;
-    -fx-background-radius: 10;
-    -fx-padding: 10 20;
-    -fx-text-fill: #333;
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: #D0D0D0;
+    -fx-border-width: 1;
+
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+
+    -fx-text-fill: #424242;
     -fx-font-size: 14px;
+    -fx-font-weight: normal;
+
+    -fx-padding: 8 14;
+    -fx-cursor: hand;
 }
 
 .action-btn:hover {
-    -fx-background-color: #e7e7e7;
+    -fx-background-color: #EEEEEE;
+    -fx-border-color: #BDBDBD;
 }
+
+.action-btn:pressed {
+    -fx-background-color: #E0E0E0;
+}
+
 
 /* --------------------------------------------------------
    Inputs (TextFields, ComboBoxes)
@@ -156,4 +170,30 @@
 .spinner {
     -fx-background-radius: 8;
     -fx-border-radius: 8;
+}
+
+/* Soft delete – same shape as Show Schedule */
+.soft-danger-btn {
+    -fx-background-color: #FFF6F6;
+    -fx-border-color: #F2A3A3;
+    -fx-border-width: 1;
+
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+
+    -fx-text-fill: #C62828;
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+
+    -fx-padding: 8 14;
+    -fx-cursor: hand;
+}
+
+.soft-danger-btn:hover {
+    -fx-background-color: #FDEAEA;
+    -fx-border-color: #E57373;
+}
+
+.soft-danger-btn:pressed {
+    -fx-background-color: #F8DADA;
 }

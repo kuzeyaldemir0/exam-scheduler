@@ -68,7 +68,7 @@
 
             <Button text="Help"
                     onAction="#showHelp"
-                    styleClass="blue-button"/>
+                    styleClass="help-button"/>
 
             <Button text="Continue"
                     onAction="#continueToScheduling"

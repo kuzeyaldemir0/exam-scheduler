@@ -52,7 +52,8 @@ public class SchedulingController {
     @FXML private ScrollPane scheduleScroll;
     @FXML private Button gotItBtn;
     @FXML private Button exportBtn;
-
+    @FXML private Button deleteStudentBtn;
+    @FXML private Button deleteClassroomBtn;
 
 
 
@@ -849,6 +850,142 @@ public class SchedulingController {
         return value;
     }
 
+    @FXML
+    private void deleteStudent() {
+
+        Integer studentId = studentCombo.getValue();
+        if (studentId == null) {
+            showAlert("Please select a student first.");
+            return;
+        }
+
+        boolean confirmed = showConfirm(
+            "Delete Student",
+            "Are you sure you want to delete student ID " + studentId + "?\nThis action cannot be undone."
+        );
+
+        if (!confirmed) return;
+
+        try {
+            importService.deleteStudentsByIds(List.of(studentId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Failed to delete student.");
+            return;
+        }
+
+        // 🧹 UI temizliği
+        studentIds.remove(studentId);
+        studentCombo.setValue(null);
+        filteredStudentId = null;
+        allStudentsList.removeIf(s -> s.getId() == studentId);
+
+        preparedScheduleResult = null;
+        exportBtn.setDisable(true);
+
+        resetScheduleUI();
+        showInfo("Student deleted successfully.");
+    }
+
+
+
+    @FXML
+    private void deleteClassroom() {
+
+        String roomName = classroomCombo.getValue();
+        if (roomName == null) {
+            showAlert("Please select a classroom first.");
+            return;
+        }
+
+        boolean confirmed = showConfirm(
+            "Delete Classroom",
+            "Are you sure you want to delete classroom \"" + roomName + "\"?\nThis action cannot be undone."
+        );
+
+        if (!confirmed) return;
+
+        // 🔑 NAME → ID
+        Integer classroomId = allClassrooms.stream()
+            .filter(c -> c.getName().equals(roomName))
+            .map(Classroom::getClassroomId)
+            .findFirst()
+            .orElse(null);
+
+        if (classroomId == null) {
+            showAlert("Classroom not found.");
+            return;
+        }
+
+        try {
+            importService.deleteClassroomsByIds(List.of(classroomId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Failed to delete classroom.");
+            return;
+        }
+
+        // 🧹 UI & state
+        classroomNames.remove(roomName);
+        classroomCombo.setValue(null);
+        allClassrooms.removeIf(c -> c.getClassroomId() == classroomId);
+
+        preparedScheduleResult = null;
+        exportBtn.setDisable(true);
+
+        resetScheduleUI();
+        showInfo("Classroom deleted successfully.");
+    }
+
+
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.show();
+    }
+
+    private void showInfo(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.show();
+    }
+
+    private boolean showConfirm(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        // Varsayılan butonları kullan (OK / Cancel)
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
+    }
+
+
+    private void resetScheduleUI() {
+
+        // Artık geçerli bir schedule yok
+        preparedScheduleResult = null;
+
+        // Takvim içeriğini temizle
+        clearRenderedSchedule();
+
+        // Unscheduled paneli kapat
+        unscheduledSection.setVisible(false);
+        unscheduledSection.setManaged(false);
+
+        // Scroll tekrar açık olsun
+        scheduleScroll.setVisible(true);
+        scheduleScroll.setManaged(true);
+
+        // Export kapalı
+        exportBtn.setDisable(true);
+        exportBtn.setTooltip(
+            new Tooltip("Generate the schedule to enable export.")
+        );
+    }
 
 
 }

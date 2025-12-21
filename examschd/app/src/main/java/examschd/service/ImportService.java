@@ -150,4 +150,13 @@ public class ImportService {
     public List<Enrollment> getAllEnrollments() throws SQLException {
         return enrollmentDAO.getAll();
     }
+
+    public void deleteStudentsByIds(List<Integer> ids) throws SQLException {
+        studentDAO.deleteByIds(ids);
+    }
+
+    public void deleteClassroomsByIds(List<Integer> ids) throws SQLException {
+        classroomDAO.deleteByIds(ids);
+    }
+
 }

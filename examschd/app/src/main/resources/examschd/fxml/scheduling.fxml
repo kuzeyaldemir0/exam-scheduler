@@ -61,10 +61,20 @@
                     <ComboBox fx:id="studentCombo"
                               promptText="Select Student"
                               prefWidth="260"/>
-                    <Button fx:id="showStudentBtn"
-                            text="Show Schedule"
-                            prefWidth="260"
-                            styleClass="action-btn"/>
+                    <HBox spacing="10" alignment="CENTER">
+                        <Button fx:id="showStudentBtn"
+                                text="Show Schedule"
+                                prefWidth="180"
+                                styleClass="action-btn"/>
+
+                        <Button fx:id="deleteStudentBtn"
+                                text="Delete"
+                                prefWidth="80"
+                                onAction="#deleteStudent"
+                                styleClass="soft-danger-btn"/>
+                    </HBox>
+
+
                 </VBox>
 
                 <!-- DATE RANGE -->
@@ -97,10 +107,19 @@
                     <ComboBox fx:id="classroomCombo"
                               promptText="Select Classroom"
                               prefWidth="260"/>
-                    <Button fx:id="showClassroomBtn"
-                            text="Show Schedule"
-                            prefWidth="260"
-                            styleClass="action-btn"/>
+                    <HBox spacing="10" alignment="CENTER">
+                        <Button fx:id="showClassroomBtn"
+                                text="Show Schedule"
+                                prefWidth="180"
+                                styleClass="action-btn"/>
+
+                        <Button fx:id="deleteClassroomBtn"
+                                text="Delete"
+                                prefWidth="80"
+                                onAction="#deleteClassroom"
+                                styleClass="soft-danger-btn"/>
+                    </HBox>
+
                 </VBox>
 
             </HBox>
@@ -184,8 +203,10 @@
             </HBox>
 
             <!-- CONTENT -->
-            <Label text="Follow these steps to create an exam timetable:"
-                   style="-fx-text-fill:#555;"/>
+            <Label text="This dashboard allows you to generate, review, export, and manage exam schedules."
+                style="-fx-text-fill:#555;"
+                wrapText="true"/>
+
 
             <Label text="① Import Data" style="-fx-font-weight:bold;"/>
             <Label text="Upload CSV files for students, courses, classrooms and enrollments."
@@ -198,6 +219,21 @@
             <Label text="③ Generate Schedule" style="-fx-font-weight:bold;"/>
             <Label text="Click Generate Schedule to create the exam calendar."
                    wrapText="true"/>
+            <Label text="④ Manage Students and Classrooms" style="-fx-font-weight:bold;"/>
+
+            <Label text="You can remove individual students or classrooms using the Delete buttons next to the Show Schedule buttons."
+                wrapText="true"/>
+
+            <Label text="• Deleting a student removes them from the system and invalidates any existing schedule."
+                wrapText="true"/>
+
+            <Label text="• Deleting a classroom removes it from scheduling and may require regenerating the schedule."
+                wrapText="true"/>
+
+            <Label text="After any deletion, you must generate the schedule again to continue."
+                wrapText="true"
+                style="-fx-text-fill:#C62828; -fx-font-weight:bold;"/>
+
 
             <Separator/>
 

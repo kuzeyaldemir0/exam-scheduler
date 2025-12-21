@@ -102,3 +102,28 @@
     -fx-font-size: 14px;
     -fx-font-weight: 600;
 }
+
+/* ================= HELP BUTTON ================= */
+
+.help-button {
+    -fx-background-color: #E8F0FE;   /* açık mavi */
+    -fx-background-radius: 10;
+    -fx-padding: 10 30;              /* 🔥 Continue ile birebir */
+
+    -fx-text-fill: #1A73E8;
+    -fx-font-size: 15px;             /* 🔥 Continue ile birebir */
+    -fx-font-weight: 700;
+
+    -fx-border-color: #C6DAFC;
+    -fx-border-radius: 10;
+
+    -fx-cursor: hand;
+}
+
+.help-button:hover {
+    -fx-background-color: #D2E3FC;
+}
+
+.help-button:pressed {
+    -fx-background-color: #AECBFA;
+}
