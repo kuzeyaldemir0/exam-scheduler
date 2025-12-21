@@ -17,8 +17,11 @@ dependencies {
     implementation "org.openjfx:javafx-controls:21.0.2"
     implementation "org.openjfx:javafx-fxml:21.0.2"
 
-
-
+    // Windows-specific JavaFX dependencies for cross-platform .exe builds
+    runtimeOnly "org.openjfx:javafx-base:21.0.2:win"
+    runtimeOnly "org.openjfx:javafx-controls:21.0.2:win"
+    runtimeOnly "org.openjfx:javafx-fxml:21.0.2:win"
+    runtimeOnly "org.openjfx:javafx-graphics:21.0.2:win"
 }
 
 javafx {
@@ -40,4 +43,43 @@ application {
 tasks.named('test') {
     useJUnitPlatform()
     maxParallelForks = 1
+}
+
+// Fat JAR configuration for bundling all dependencies
+tasks.register('fatJar', Jar) {
+    archiveBaseName.set('ExamScheduler')
+    archiveClassifier.set('all')
+    archiveVersion.set('')
+
+    manifest {
+        attributes 'Main-Class': 'examschd.App'
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
+}
+
+// jpackage task for creating native installers (run on the target OS via GitHub Actions)
+tasks.register('jpackageWindows', Exec) {
+    dependsOn fatJar
+    def jarFile = fatJar.archiveFile.get().asFile
+    def outputDir = layout.buildDirectory.dir('jpackage').get().asFile
+
+    doFirst {
+        outputDir.mkdirs()
+    }
+
+    commandLine 'jpackage',
+        '--input', jarFile.parentFile.absolutePath,
+        '--main-jar', jarFile.name,
+        '--main-class', 'examschd.App',
+        '--name', 'ExamScheduler',
+        '--app-version', '1.0.0',
+        '--type', 'exe',
+        '--dest', outputDir.absolutePath,
+        '--win-console'
 }
