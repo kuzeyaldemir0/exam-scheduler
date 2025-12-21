@@ -51,20 +51,49 @@ jobs:
       - name: Upload Windows App (Portable ZIP)
         uses: actions/upload-artifact@v4
         with:
-          name: ExamScheduler-Windows
+          name: ExamScheduler-Portable
           path: ./examschd/dist/ExamScheduler-Windows-Portable.zip
           retention-days: 30
 
-      - name: Verify build
+      - name: Create Windows installer with jpackage
         run: |
-          $exePath = "./examschd/dist/ExamScheduler/ExamScheduler.exe"
-          if (Test-Path $exePath) {
-            $size = [math]::Round((Get-Item $exePath).Length/1MB, 2)
-            Write-Host "ExamScheduler.exe created successfully! ($size MB)"
-            Write-Host "Contents of portable app:"
-            Get-ChildItem ./examschd/dist/ExamScheduler | Format-Table Name, Length
+          jpackage `
+            --input ./app/build/libs `
+            --main-jar ExamScheduler-all.jar `
+            --main-class examschd.Launcher `
+            --name ExamScheduler `
+            --app-version 1.0.0 `
+            --type exe `
+            --dest ./dist/installer `
+            --win-dir-chooser `
+            --win-menu `
+            --win-shortcut
+        working-directory: ./examschd
+        shell: pwsh
+
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExamScheduler-Installer
+          path: ./examschd/dist/installer/*.exe
+          retention-days: 30
+
+      - name: Verify builds
+        run: |
+          Write-Host "=== Portable App ==="
+          $portablePath = "./examschd/dist/ExamScheduler/ExamScheduler.exe"
+          if (Test-Path $portablePath) {
+            $size = [math]::Round((Get-Item $portablePath).Length/1MB, 2)
+            Write-Host "Portable ExamScheduler.exe: $size MB"
+          }
+
+          Write-Host "`n=== Installer ==="
+          $installerPath = Get-ChildItem ./examschd/dist/installer/*.exe -ErrorAction SilentlyContinue
+          if ($installerPath) {
+            $size = [math]::Round($installerPath.Length/1MB, 2)
+            Write-Host "Installer: $($installerPath.Name) ($size MB)"
           } else {
-            Write-Error "Failed to create ExamScheduler.exe"
+            Write-Error "Failed to create installer"
             exit 1
           }
         shell: pwsh
