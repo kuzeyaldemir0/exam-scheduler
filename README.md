@@ -24,11 +24,12 @@ A desktop application for generating conflict-free exam timetables with automati
 - **Classroom Schedule View**: Filter exams by room
 - **User Configuration**: Date range selection, max exams per day
 - **Help Dialog**: In-app guide explaining the workflow
+- **CSV Export**: Export schedule to CSV
 - **Comprehensive Testing**: Stress tests up to 10,000 students, 500 courses (generated)
 - **Demo Datasets**: Example CSVs including multi-room splitting and multi-day demo sets
 
 ### Pending
-- PDF/CSV export
+- PDF export
 
 ## Tech Stack
 
@@ -59,10 +60,14 @@ examschd/app/src/main/java/examschd/
 │   ├── Enrollment.java
 │   ├── ExamSession.java            # Scheduled exam
 │   ├── ExamPartition.java          # Room assignment
+│   ├── ScheduleResult.java
+│   ├── SchedulingFailureReason.java
+│   ├── TimeSlottedExam.java
 │   └── ExamConfig.java             # User settings
 ├── dao/                            # Database interfaces
 ├── daoimpl/                        # SQLite implementations
 └── db/
+    ├── DB.java                     # DB connection
     └── DBInitializer.java          # Schema creation
 ```
 
@@ -74,7 +79,7 @@ The scheduler separates the problem into two distinct phases for clarity, modula
 
 #### Phase 1: Time Slot Assignment
 - **Goal**: Assign time slots to all courses
-- **Heuristic**: "Most Constrained Variable First" (courses with most student conflicts scheduled first)
+- **Heuristics**: Tries conflict score (most constrained), student count, and duration orderings; selects the best result
 - **Constraints Checked**:
   - No student has overlapping exams (with 90-min gap requirement)
   - No student exceeds max exams/day
@@ -94,23 +99,21 @@ The scheduler separates the problem into two distinct phases for clarity, modula
 
 ### Algorithm Details
 
-**Phase 1: Conflict-Based Sorting (Most Constrained Variable First)**
+**Phase 1: Multi-Strategy Ordering (Best-Result Selection)**
 
-1. **Calculate conflict score** for each course:
-   - Count how many OTHER courses share students with this course
-   - Example: If CourseA has students enrolled in 8 other courses, conflict score = 8
-   - Higher score = more constrained (harder to schedule) = schedule first
+1. **Build three orderings**:
+   - Conflict score (most constrained first)
+   - Student count (largest classes first)
+   - Duration (longest exams first)
 
-2. **Sort courses** by conflict score (descending - most conflicts first)
-   - This is the "Most Constrained Variable First" heuristic from constraint satisfaction
-   - Scheduling hard courses first leaves more flexibility for easier courses
+2. **For each ordering**, try to time-slot every course:
+   - Bin-pack into existing time slots, then create new ones
+   - Verify no student overlaps (90-min buffer) and max exams/day
+   - Verify sufficient remaining capacity at the time slot
 
-3. **For each course**, try bin-packing into existing time slots, then new time slots:
-   - Verify no student has overlapping exam with 90-min buffer
-   - Verify no student exceeds max exams/day
-   - Verify sufficient remaining capacity at this time slot
+3. **Select the best ordering** by total courses scheduled.
 
-4. **Track result**: If successful, mark as time-slotted; otherwise mark as unscheduled
+4. **Track result**: Time-slotted courses proceed to Phase 2; unscheduled courses are reported.
 
 **Phase 2: Bin-Packed Room Allocation**
 
@@ -135,15 +138,20 @@ If the algorithm cannot schedule all courses due to constraints:
 - **Logs warnings** for unscheduled courses to console: `WARNING: Could not schedule [CourseName]`
 - **User sees** what was successfully scheduled in calendar view
 
-#### Expected Success Rates
+#### Sample Success Rate Analysis (Seeded Run)
 
-| Scenario | Success Rate | Conditions |
-|----------|-------------|------------|
-| **Ideal** | **100%** | Small courses (30), ample time (14+ days), sufficient rooms |
-| **Normal University** | **80-84%** | 50-100 courses, 14+ days, moderate conflicts |
-| **Dense Conflicts** | **70%** | Many students share most courses |
-| **Limited Time** | **57%** | Too many courses for available exam days |
-| **Large Scale** | **56%** | 500+ courses, 10,000+ students |
+The following results are from a single seeded run of `SchedulerSuccessRateTest`. Actual rates and timings vary with data, constraints, and machine.
+
+| Scenario | Courses Scheduled | Success Rate | Time |
+|----------|-------------------|--------------|------|
+| Ideal Conditions | 20/20 | 100.0% | 87ms |
+| Moderate/Realistic | 35/35 | 100.0% | 119ms |
+| Tight Time Constraints | 26/45 | 57.8% | 328ms |
+| Dense Conflicts | 28/30 | 93.3% | 74ms |
+| Limited Capacity | 35/35 | 100.0% | 62ms |
+| Large Scale | 86/120 | 71.7% | 2710ms |
+
+To reproduce, run: `./gradlew test --tests "examschd.service.SchedulerSuccessRateTest"`
 
 #### Common Reasons for Failed Scheduling
 
@@ -300,15 +308,7 @@ Or view the report at: `examschd/app/build/reports/tests/test/index.html`
 - **Varied capacities**: 10-500 students per course
 - **Limited exam time**: Scheduling with constrained availability
 
-### Performance Benchmarks
-
-| Scale | Students | Courses | Classrooms | Time |
-|-------|----------|---------|------------|------|
-| Small | 100 | 20 | 10 | <5ms |
-| Medium | 1,000 | 50 | 20 | ~25ms |
-| Large | 10,000 | 500 | 50 | ~730ms |
-
-**All tests verify:**
+**Scheduling tests verify (where applicable):**
 - No student has overlapping exams
 - Max exams per day constraint respected
 - Minimum 90-minute gap between exams for students
@@ -356,7 +356,7 @@ This allows flexible, reproducible testing without large CSV files.
 | **studentMinGapMinutes** | 90 | Filter settings | Minimum gap between exams for same student |
 | **examStartHour** | 9 | Filter settings | Exam day start time (24-hour format) |
 | **examEndHour** | 21 | Filter settings | Exam day end time (24-hour format) |
-| **courseDurations** | 90 min | Config/Default | Per-course exam duration |
+| **courseDurations** | 120 min | Config/Default | Per-course exam duration |
 
 The scheduler uses these settings to:
 - Determine available exam windows (dates × exam hours)
@@ -365,9 +365,4 @@ The scheduler uses these settings to:
 - Allow rooms to be prepared between exams (15-min turnover)
 - Allocate appropriate exam durations
 
-## Key Decisions
-
-1. **Greedy over Backtracking**: Simpler, faster for typical cases. Backtracking planned for edge cases.
-2. **SQLite for Persistence**: Lightweight, no server needed. Data survives between sessions.
-3. **Bin-packing for Rooms**: Largest rooms first minimizes room count.
 4. **Real-time Scheduling**: Exams scheduled at exact times (not fixed slots) within configurable exam hours (default 9:00-21:00).
