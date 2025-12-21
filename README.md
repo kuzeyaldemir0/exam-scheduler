@@ -24,8 +24,8 @@ A desktop application for generating conflict-free exam timetables with automati
 - **Classroom Schedule View**: Filter exams by room
 - **User Configuration**: Date range selection, max exams per day
 - **Help Dialog**: In-app guide explaining the workflow
-- **Comprehensive Testing**: Stress tests up to 10,000 students, 500 courses
-- **Demo Datasets**: Example CSVs showing multi-room splitting and concurrent scheduling
+- **Comprehensive Testing**: Stress tests up to 10,000 students, 500 courses (generated)
+- **Demo Datasets**: Example CSVs including multi-room splitting and multi-day demo sets
 
 ### Pending
 - PDF/CSV export
@@ -212,7 +212,14 @@ CourseCode_02
 
 ## Demo Datasets
 
-Sample CSV files are provided in `app/src/test/resources/csv/` for testing and demonstration. Use these to explore the scheduling algorithm's features.
+Sample CSV files are provided in `app/src/test/resources/csv/` for testing and demonstration:
+
+- **Base CSVs (root)**: Small default dataset used by tests
+- **demo-multi-room-split/**: Forces room splitting for large courses
+- **demo-9day-500s/**: 500 students, 40 courses, 12 rooms (minimum 9-day schedulable)
+- **demo-14day-1000s/**: 1,000 students, 80 courses, 20 rooms (minimum 14-day schedulable)
+
+The demo datasets use randomized, realistic overlaps (each student is in multiple courses).
 
 ## Running
 
