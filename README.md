@@ -25,11 +25,9 @@ A desktop application for generating conflict-free exam timetables with automati
 - **User Configuration**: Date range selection, max exams per day
 - **Help Dialog**: In-app guide explaining the workflow
 - **CSV Export**: Export schedule to CSV
+- **PDF Export**: Export schedule to PDF
 - **Comprehensive Testing**: Stress tests up to 10,000 students, 500 courses (generated)
 - **Demo Datasets**: Example CSVs including multi-room splitting and multi-day demo sets
-
-### Pending
-- PDF export
 
 ## Tech Stack
 
