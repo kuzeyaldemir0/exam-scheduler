@@ -162,9 +162,9 @@ public class Scheduler {
 
     /**
      * Calculates the remaining classroom capacity available at a specific time slot.
-     * This method tracks EXACTLY how much capacity is left after accounting for exams
-     * already scheduled at this time. This precise tracking ensures Phase 2 will never
-     * fail due to insufficient classroom capacity.
+     * Phase 1 does not assign rooms yet, so this uses a conservative rule:
+     * - Exams with the same start time can share the pooled capacity of all rooms.
+     * - Any overlap with a different start time makes the slot unavailable.
      *
      * @param startTime the start time of the time slot
      * @param endTime the end time of the time slot
@@ -178,47 +178,75 @@ public class Scheduler {
             LocalDateTime endTime,
             List<Classroom> allRooms,
             int roomTurnoverMinutes,
-            List<TimeSlottedExam> alreadyTimeSlottedExams) {
+            List<TimeSlottedExam> alreadyTimeSlottedExams,
+            int candidateStudentCount) {
 
-        // Step 1: Calculate total capacity of all available rooms at this time
+        // Step 1: Total pooled capacity from all rooms
         int totalCapacityAtThisTime = 0;
-
         for (Classroom currentRoom : allRooms) {
-            boolean isRoomAvailable = true;
-
-            // Check if this room is already committed to another exam at this time
-            LocalDateTime endTimeWithTurnover = endTime.plusMinutes(roomTurnoverMinutes);
-
-            for (TimeSlottedExam existingExam : alreadyTimeSlottedExams) {
-                // Check if the existing exam's time window overlaps with our requested time
-                LocalDateTime existingEndWithTurnover = existingExam.getEndTime().plusMinutes(roomTurnoverMinutes);
-
-                // If time windows overlap, this room cannot be used
-                if (!(endTimeWithTurnover.isBefore(existingExam.getStartTime()) ||
-                      existingEndWithTurnover.isBefore(startTime))) {
-                    isRoomAvailable = false;
-                    break;
-                }
-            }
-
-            if (isRoomAvailable) {
-                totalCapacityAtThisTime += currentRoom.getCapacity();
-            }
+            totalCapacityAtThisTime += currentRoom.getCapacity();
         }
 
-        // Step 2: Subtract capacity already committed to exams at this exact time slot
+        // Step 2: If any overlapping exam has a different start time, block this slot
         int capacityCommitted = 0;
+        LocalDateTime endTimeWithTurnover = endTime.plusMinutes(roomTurnoverMinutes);
 
         for (TimeSlottedExam existingExam : alreadyTimeSlottedExams) {
-            // Only count exams that are scheduled at this exact same time slot
-            if (existingExam.getStartTime().equals(startTime)) {
+            LocalDateTime existingStart = existingExam.getStartTime();
+            LocalDateTime existingEndWithTurnover =
+                existingExam.getEndTime().plusMinutes(roomTurnoverMinutes);
+
+            boolean overlaps = !(endTimeWithTurnover.isBefore(existingStart) ||
+                                 existingEndWithTurnover.isBefore(startTime));
+
+            if (overlaps && !existingStart.equals(startTime)) {
+                return 0;
+            }
+
+            if (existingStart.equals(startTime)) {
                 capacityCommitted += existingExam.getStudentCount();
             }
         }
 
-        // Step 3: Return the remaining available capacity
+        // Step 3: Ensure enough rooms exist for all exams at this same start time
+        if (!canAllocateRoomsAtSameStart(
+                startTime, candidateStudentCount, allRooms, alreadyTimeSlottedExams)) {
+            return 0;
+        }
+
+        // Step 4: Return the remaining pooled capacity
         int remainingCapacity = totalCapacityAtThisTime - capacityCommitted;
         return Math.max(0, remainingCapacity); // Never return negative
+    }
+
+    private boolean canAllocateRoomsAtSameStart(
+            LocalDateTime startTime,
+            int candidateStudentCount,
+            List<Classroom> allRooms,
+            List<TimeSlottedExam> alreadyTimeSlottedExams) {
+
+        List<Integer> studentCounts = new ArrayList<>();
+        for (TimeSlottedExam existingExam : alreadyTimeSlottedExams) {
+            if (existingExam.getStartTime().equals(startTime)) {
+                studentCounts.add(existingExam.getStudentCount());
+            }
+        }
+        studentCounts.add(candidateStudentCount);
+        studentCounts.sort(Comparator.reverseOrder());
+
+        List<Classroom> availableRooms = new ArrayList<>(allRooms);
+        availableRooms.sort((roomA, roomB) ->
+            Integer.compare(roomB.getCapacity(), roomA.getCapacity())
+        );
+
+        for (int count : studentCounts) {
+            List<Classroom> allocatedRooms = allocateRoomsForExam(count, availableRooms);
+            if (allocatedRooms == null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -316,7 +344,12 @@ public class Scheduler {
 
                 // Check 4: Is there enough remaining capacity at this time slot?
                 int remainingCapacity = getRemainingCapacityAtTimeSlot(
-                    existingSlotStart, slotEnd, allRooms, roomTurnoverMinutes, timeSlottedExams
+                    existingSlotStart,
+                    slotEnd,
+                    allRooms,
+                    roomTurnoverMinutes,
+                    timeSlottedExams,
+                    studentCount
                 );
 
                 if (remainingCapacity < studentCount) {
@@ -408,7 +441,12 @@ public class Scheduler {
 
                         // Check 3: Is there enough remaining capacity?
                         int remainingCapacity = getRemainingCapacityAtTimeSlot(
-                            startTime, endTime, allRooms, roomTurnoverMinutes, timeSlottedExams
+                            startTime,
+                            endTime,
+                            allRooms,
+                            roomTurnoverMinutes,
+                            timeSlottedExams,
+                            studentCount
                         );
 
                         if (remainingCapacity < studentCount) {
@@ -500,9 +538,16 @@ public class Scheduler {
             List<TimeSlottedExam> examsAtThisSlot = slotEntry.getValue();
 
             // Find all rooms that are available during this entire time slot
+            LocalDateTime slotEnd = slotStart;
+            for (TimeSlottedExam exam : examsAtThisSlot) {
+                if (exam.getEndTime().isAfter(slotEnd)) {
+                    slotEnd = exam.getEndTime();
+                }
+            }
+
             List<Classroom> availableRoomsAtThisSlot = findAvailableRoomsForSlot(
                 slotStart,
-                slotStart.plusMinutes(60), // Estimate end time for finding available rooms
+                slotEnd,
                 allRooms,
                 roomTurnoverMinutes,
                 allExamSessions

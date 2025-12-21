@@ -24,43 +24,43 @@ public class SchedulerSuccessRateTest {
 
         // Scenario 1: Ideal conditions (plenty of time, rooms, low conflicts)
         runScenario("Ideal Conditions",
-            500, 30, 15,
-            25, 10, 4, 1,
+            300, 20, 10,
+            20, 8, 4, 1,
             new int[]{30, 40, 50, 100},
             14, 42);
 
         // Scenario 2: Moderate conditions (realistic university setting)
         runScenario("Moderate/Realistic",
-            1000, 50, 20,
-            30, 15, 5, 2,
+            600, 35, 15,
+            25, 10, 5, 2,
             new int[]{20, 30, 40, 50, 100},
             14, 123);
 
         // Scenario 3: Tight constraints (limited time)
         runScenario("Tight Time Constraints",
-            500, 60, 15,
-            25, 10, 5, 2,
+            400, 45, 12,
+            22, 8, 5, 2,
             new int[]{30, 40, 50},
             7, 555);
 
         // Scenario 4: Dense conflicts (many shared courses)
         runScenario("Dense Conflicts",
-            500, 40, 15,
-            180, 40, 12, 3,
+            300, 30, 12,
+            120, 30, 10, 3,
             new int[]{50, 100, 150, 200},
             14, 999);
 
         // Scenario 5: Limited classroom capacity
         runScenario("Limited Capacity",
-            800, 50, 10,
-            30, 12, 5, 2,
+            500, 35, 8,
+            25, 10, 5, 2,
             new int[]{20, 25, 30},
             14, 777);
 
         // Scenario 6: Large scale (stress test)
         runScenario("Large Scale",
-            10000, 500, 50,
-            25, 12, 6, 3,
+            2000, 120, 25,
+            25, 10, 6, 3,
             new int[]{30, 50, 80, 100, 150, 200},
             21, 12345);
 

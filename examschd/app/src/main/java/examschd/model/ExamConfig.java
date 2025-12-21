@@ -1,6 +1,5 @@
 package examschd.model;
 
-import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -20,8 +19,7 @@ public class ExamConfig {
 
     }
 
-    public ExamConfig(Map<LocalDate, Boolean> allowedExamDays,
-                      int maxExamsPerDay,
+    public ExamConfig(int maxExamsPerDay,
                       int roomTurnoverMinutes,
                       int studentMinGapMinutes,
                       Map<String, Integer> courseDurations) {

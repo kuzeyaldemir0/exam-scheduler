@@ -151,7 +151,6 @@ public class FilterSettingsController {
         }
 
         ExamConfig config = new ExamConfig(
-            Collections.emptyMap(),
             maxExamsSpinner.getValue(),
             roomTurnoverSpinner.getValue(),
             studentGapSpinner.getValue(),

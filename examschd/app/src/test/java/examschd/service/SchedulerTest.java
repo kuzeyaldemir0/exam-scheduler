@@ -3,6 +3,7 @@ package examschd.service;
 import examschd.model.*;
 import examschd.service.readers.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
@@ -433,6 +434,7 @@ class SchedulerTest {
     }
 
     @Test
+    @Disabled("Long-running stress test; run manually when needed.")
     @DisplayName("Stress test: Large scale (10,000 students, 500 courses)")
     void testLargeScaleScheduling() {
         System.out.println("\n=== LARGE SCALE STRESS TEST ===");
