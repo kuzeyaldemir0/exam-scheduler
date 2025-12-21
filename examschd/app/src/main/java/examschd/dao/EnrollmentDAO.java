@@ -13,4 +13,6 @@ public interface EnrollmentDAO {
     boolean enroll(int studentId, int courseId) throws SQLException;
     boolean withdraw(int studentId, int courseId) throws SQLException;
     boolean updateCourseForStudent(int studentId, int oldCourseId, int newCourseId) throws SQLException;
+    List<String> getCourseNamesByStudentId(int studentId) throws SQLException;
+
 }

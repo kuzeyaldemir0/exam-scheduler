@@ -54,4 +54,8 @@ public class Student {
     public void setId(int id) {
         this.studentId = id;
     }
+
+    public void setName(String name) {
+        this.studentName = name;
+    }
 }

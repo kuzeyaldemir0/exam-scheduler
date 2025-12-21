@@ -1,5 +1,6 @@
 package examschd.controller;
 
+import examschd.daoimpl.ClassroomDAOImpl;
 import examschd.model.*;
 import examschd.service.ImportService;
 import examschd.service.Scheduler;
@@ -27,7 +28,6 @@ import java.time.LocalDate;
 import java.util.*;
 
 import javafx.animation.Interpolator;
-import javafx.animation.ScaleTransition;
 import javafx.animation.Transition;
 import javafx.util.Duration;
 
@@ -42,7 +42,10 @@ public class SchedulingController {
     @FXML private Button applyDateRangeBtn;
 
     @FXML private TextField studentSearchField;
-    @FXML private ComboBox<Integer> studentCombo;
+
+    @FXML private ComboBox<String> studentCombo;
+    private ObservableList<String> studentNames = FXCollections.observableArrayList();
+
     @FXML private Button showStudentBtn;
 
     @FXML private TextField classroomSearchField;
@@ -54,9 +57,7 @@ public class SchedulingController {
     @FXML private Button exportBtn;
     @FXML private Button deleteStudentBtn;
     @FXML private Button deleteClassroomBtn;
-
-
-
+    @FXML private Button editClassroomBtn;
 
     @FXML
     private VBox helpOverlay;
@@ -82,7 +83,6 @@ public class SchedulingController {
     private List<Student> allStudentsList = new ArrayList<>();
     private List<Course> allCourses = new ArrayList<>();
 
-    private ObservableList<Integer> studentIds = FXCollections.observableArrayList();
     private ObservableList<String> classroomNames = FXCollections.observableArrayList();
 
     private Map<LocalDate, VBox> dayColumnMap = new LinkedHashMap<>();
@@ -139,8 +139,6 @@ public class SchedulingController {
     }
     private void animateBgColor(Button btn, Color from, Color to, Duration dur) {
 
-        final long start = System.currentTimeMillis();
-
             Transition t = new Transition() {
                 {
                     setCycleDuration(dur);
@@ -172,13 +170,18 @@ public class SchedulingController {
             allClassrooms = importService.getAllClassrooms();
             allEnrollments = importService.getAllEnrollments();
 
-            studentIds.clear();
+            studentNames.clear();
             classroomNames.clear();
 
-            for (Student s : allStudentsList) studentIds.add(s.getId());
-            for (Classroom c : allClassrooms) classroomNames.add(c.getName());
+            for (Student s : allStudentsList) {
+                studentNames.add(s.getStudentName());
+            }
 
-            studentCombo.setItems(studentIds);
+            for (Classroom c : allClassrooms) {
+                classroomNames.add(c.getName());
+            }
+
+            studentCombo.setItems(studentNames);
             classroomCombo.setItems(classroomNames);
 
             setupSearchFilters();
@@ -188,6 +191,7 @@ public class SchedulingController {
             e.printStackTrace();
         }
     }
+
 
     private void initDefaultConfig() {
         Map<String, Integer> dur = new LinkedHashMap<>();
@@ -476,7 +480,6 @@ public class SchedulingController {
             File enrollmentsFile,
             File studentsFile
     ) {
-
         try {
             importService.loadExistingData();
 
@@ -495,30 +498,28 @@ public class SchedulingController {
             if (allClassrooms == null) allClassrooms = new ArrayList<>();
             if (allEnrollments == null) allEnrollments = new ArrayList<>();
 
-            studentIds.clear();
+            studentNames.clear();
             classroomNames.clear();
 
             for (Student s : allStudentsList) {
-                studentIds.add(s.getId());
+                studentNames.add(s.getStudentName());
             }
 
             for (Classroom c : allClassrooms) {
                 classroomNames.add(c.getName());
             }
 
-            studentCombo.setItems(studentIds);
+            studentCombo.setItems(studentNames);
             classroomCombo.setItems(classroomNames);
 
             setupSearchFilters();
             initDefaultConfig();
 
-            System.out.println("Data imported and UI refreshed");
-            System.out.println("Exam hours set to: " + userConfig.getExamStartHour() + ":00 - " + userConfig.getExamEndHour() + ":00");
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 
     // @FXML
     // private void showHelp() {
@@ -590,10 +591,13 @@ public class SchedulingController {
         showStudentBtn.setOnAction(e -> {
             if (preparedScheduleResult == null) return;
 
-            Integer id = studentCombo.getValue();
+            String name = studentCombo.getValue();
+            if (name == null) return;
+
+            Integer id = findStudentIdByName(name);
             if (id == null) return;
 
-            filteredStudentId = id;  // Set filter for room display
+            filteredStudentId = id;
 
             Map<LocalDate, List<ExamSession>> filtered = new LinkedHashMap<>();
 
@@ -601,8 +605,8 @@ public class SchedulingController {
                 List<ExamSession> list = new ArrayList<>();
                 for (ExamSession s : entry.getValue()) {
                     boolean ok = s.getCourse().getStudents()
-                                  .stream()
-                                  .anyMatch(st -> st.getId() == id);
+                                .stream()
+                                .anyMatch(st -> st.getId() == id);
                     if (ok) list.add(s);
                 }
                 filtered.put(entry.getKey(), list);
@@ -610,6 +614,7 @@ public class SchedulingController {
 
             renderSchedule(filtered);
         });
+
 
         showClassroomBtn.setOnAction(e -> {
             if (preparedScheduleResult == null) return;
@@ -652,18 +657,25 @@ public class SchedulingController {
 
     private void setupSearchFilters() {
 
-        studentSearchField.textProperty().addListener((o,a,b) ->
+        studentSearchField.textProperty().addListener((o, a, b) ->
             studentCombo.setItems(
-                studentIds.filtered(id -> b.isEmpty() || id.toString().contains(b))
+                studentNames.filtered(name ->
+                    b == null || b.isEmpty() ||
+                    name.toLowerCase().contains(b.toLowerCase())
+                )
             )
         );
 
-        classroomSearchField.textProperty().addListener((o,a,b) ->
+        classroomSearchField.textProperty().addListener((o, a, b) ->
             classroomCombo.setItems(
-                classroomNames.filtered(n -> n.toLowerCase().contains(b.toLowerCase()))
+                classroomNames.filtered(n ->
+                    b == null || b.isEmpty() ||
+                    n.toLowerCase().contains(b.toLowerCase())
+                )
             )
         );
     }
+
 
     @FXML
     private void applyDateRange() {
@@ -853,17 +865,22 @@ public class SchedulingController {
     @FXML
     private void deleteStudent() {
 
-        Integer studentId = studentCombo.getValue();
-        if (studentId == null) {
+        String studentName = studentCombo.getValue();
+        if (studentName == null) {
             showAlert("Please select a student first.");
+            return;
+        }
+
+        Integer studentId = findStudentIdByName(studentName);
+        if (studentId == null) {
+            showAlert("Student not found.");
             return;
         }
 
         boolean confirmed = showConfirm(
             "Delete Student",
-            "Are you sure you want to delete student ID " + studentId + "?\nThis action cannot be undone."
+            "Are you sure you want to delete student \"" + studentName + "\"?\nThis action cannot be undone."
         );
-
         if (!confirmed) return;
 
         try {
@@ -874,8 +891,8 @@ public class SchedulingController {
             return;
         }
 
-        // 🧹 UI temizliği
-        studentIds.remove(studentId);
+        // 🧹 UI & state
+        studentNames.remove(studentName);
         studentCombo.setValue(null);
         filteredStudentId = null;
         allStudentsList.removeIf(s -> s.getId() == studentId);
@@ -886,6 +903,7 @@ public class SchedulingController {
         resetScheduleUI();
         showInfo("Student deleted successfully.");
     }
+
 
 
 
@@ -987,5 +1005,72 @@ public class SchedulingController {
         );
     }
 
+    private Integer findStudentIdByName(String name) {
+        return allStudentsList.stream()
+            .filter(s -> s.getStudentName().equals(name))
+            .map(Student::getId)
+            .findFirst()
+            .orElse(null);
+    }
+
+    @FXML
+    private void editClassroom() {
+
+        String selectedName = classroomCombo.getValue();
+        if (selectedName == null) {
+            showAlert("Please select a classroom first.");
+            return;
+        }
+
+        Classroom classroom = allClassrooms.stream()
+            .filter(c -> c.getName().equals(selectedName))
+            .findFirst()
+            .orElse(null);
+
+        if (classroom == null) {
+            showAlert("Classroom not found.");
+            return;
+        }
+
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/examschd/fxml/edit_classroom.fxml")
+            );
+            Parent root = loader.load();
+
+            EditClassroomController ctrl = loader.getController();
+            ctrl.setClassroom(classroom);
+
+            Stage popup = new Stage();
+            popup.initModality(Modality.APPLICATION_MODAL);
+            popup.setTitle("Edit Classroom");
+            popup.setScene(new Scene(root));
+            popup.showAndWait();
+
+            Classroom updated = ctrl.getUpdatedClassroom();
+            if (updated == null) return;
+
+            // DB UPDATE
+            new ClassroomDAOImpl().update(updated);
+
+            // 🔄 UI REFRESH
+            classroomNames.clear();
+            for (Classroom c : allClassrooms) {
+                classroomNames.add(c.getName());
+            }
+
+            classroomCombo.setItems(classroomNames);
+            classroomCombo.setValue(updated.getName());
+
+            preparedScheduleResult = null;
+            resetScheduleUI();
+
+            showInfo("Classroom updated successfully.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Failed to update classroom.");
+        }
+    }
 
 }

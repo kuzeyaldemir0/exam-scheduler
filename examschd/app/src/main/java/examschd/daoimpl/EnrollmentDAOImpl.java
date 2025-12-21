@@ -77,6 +77,29 @@ public class EnrollmentDAOImpl implements EnrollmentDAO {
         }
     }
 
+    public List<String> getCourseNamesByStudentId(int studentId) throws SQLException {
+        List<String> courses = new ArrayList<>();
+
+        String sql =
+            "SELECT c.course_name " +
+            "FROM Enrollments e " +
+            "JOIN Courses c ON c.course_id = e.course_id " +
+            "WHERE e.student_id = ?";
+
+        try (Connection conn = DB.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, studentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    courses.add(rs.getString("course_name"));
+                }
+            }
+        }
+        return courses;
+    }
+
 
     @Override
     public boolean enroll(int studentId, int courseId) throws SQLException {

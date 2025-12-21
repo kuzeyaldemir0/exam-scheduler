@@ -70,4 +70,9 @@ public class Course {
     public int hashCode() {
         return Objects.hash(courseId);
     }
+
+    @Override
+    public String toString() {
+        return courseName;
+    }
 }

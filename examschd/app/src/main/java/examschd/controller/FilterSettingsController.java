@@ -209,8 +209,6 @@ public class FilterSettingsController {
 
     private void animateBgColor(Button btn, Color from, Color to, Duration dur) {
 
-        final long start = System.currentTimeMillis();
-
             Transition t = new Transition() {
                 {
                     setCycleDuration(dur);

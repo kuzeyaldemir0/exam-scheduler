@@ -63,8 +63,8 @@
                               prefWidth="260"/>
                     <HBox spacing="10" alignment="CENTER">
                         <Button fx:id="showStudentBtn"
-                                text="Show Schedule"
-                                prefWidth="180"
+                                text="Show"
+                                prefWidth="80"
                                 styleClass="action-btn"/>
 
                         <Button fx:id="deleteStudentBtn"
@@ -109,8 +109,8 @@
                               prefWidth="260"/>
                     <HBox spacing="10" alignment="CENTER">
                         <Button fx:id="showClassroomBtn"
-                                text="Show Schedule"
-                                prefWidth="180"
+                                text="Show"
+                                prefWidth="80"
                                 styleClass="action-btn"/>
 
                         <Button fx:id="deleteClassroomBtn"
@@ -118,6 +118,11 @@
                                 prefWidth="80"
                                 onAction="#deleteClassroom"
                                 styleClass="soft-danger-btn"/>
+                        <Button fx:id="editClassroomBtn"
+                                text="Edit"
+                                prefWidth="80"
+                                onAction="#editClassroom"
+                                styleClass="soft-neutral-btn"/>
                     </HBox>
 
                 </VBox>
